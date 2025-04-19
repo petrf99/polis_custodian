@@ -1,0 +1,7 @@
+.env
+
+pgdata/
+__pycache__/
+*.pyc
+
+**/temp_data/
