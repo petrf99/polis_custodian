@@ -1,0 +1,25 @@
+# 📦 Базовый Python-образ
+FROM python:3.10-slim
+
+# 🛠️ Устанавливаем системные зависимости (если нужны)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    ffmpeg \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# 🏗️ Устанавливаем рабочую директорию
+WORKDIR /app
+
+# 📂 Копируем все исходники
+COPY ../.. /app/
+
+# 📦 Устанавливаем зависимости
+RUN pip install --upgrade pip
+RUN pip install -r app/docker/requirements.txt
+
+# ✅ Устанавливаем PYTHONPATH
+ENV PYTHONPATH=/app
+
+# 💬 На время dev можешь переопределять команду в docker-compose
+CMD ["python", "app/chronicler/main.py"]

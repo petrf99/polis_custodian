@@ -1,0 +1,62 @@
+version: '3.9'
+
+services:
+
+  chronicler:
+    build:
+      context: ../..
+      dockerfile: app/docker/Dockerfile
+    container_name: chronicler
+    command: ["python", "app/chronicler/main.py"]
+    env_file:
+      - ../../.env
+    volumes:
+      - ../..:/app
+    depends_on:
+      - redis
+    restart: always
+
+  companion:
+    build:
+      context: ../..
+      dockerfile: app/docker/Dockerfile
+    container_name: companion
+    command: ["python", "app/companion/main.py"]
+    env_file:
+      - ../../.env
+    volumes:
+      - ../..:/app
+    restart: always
+
+  dispatcher:
+    build:
+      context: ../..
+      dockerfile: app/docker/Dockerfile
+    container_name: dispatcher
+    command: ["python", "app/dispatcher/dispatcher.py"]
+    env_file:
+      - ../../.env
+    volumes:
+      - ../..:/app
+    restart: always
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: app/docker/Dockerfile
+    container_name: celery_worker
+    command: ["celery", "-A", "app.dispatcher.celery_app", "worker", "--loglevel=info"]
+    env_file:
+      - ../../.env
+    volumes:
+      - ../..:/app
+    depends_on:
+      - redis
+    restart: always
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
