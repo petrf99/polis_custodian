@@ -7,7 +7,7 @@ services:
       context: ../..
       dockerfile: app/docker/Dockerfile
     container_name: chronicler
-    command: ["python", "app/chronicler/main.py"]
+    command: ["python", "application/chronicler/main.py"]
     env_file:
       - ../../.env
     volumes:
@@ -21,7 +21,7 @@ services:
       context: ../..
       dockerfile: app/docker/Dockerfile
     container_name: companion
-    command: ["python", "app/companion/main.py"]
+    command: ["python", "application/companion/main.py"]
     env_file:
       - ../../.env
     volumes:
@@ -33,7 +33,7 @@ services:
       context: ../..
       dockerfile: app/docker/Dockerfile
     container_name: dispatcher
-    command: ["python", "app/dispatcher/dispatcher.py"]
+    command: ["python", "application/dispatcher/dispatcher.py"]
     env_file:
       - ../../.env
     volumes:
@@ -45,7 +45,7 @@ services:
       context: ../..
       dockerfile: app/docker/Dockerfile
     container_name: celery_worker
-    command: ["celery", "-A", "app.dispatcher.celery_app", "worker", "--loglevel=info"]
+    command: ["celery", "-A", "application.dispatcher.celery_app", "worker", "--loglevel=info"]
     env_file:
       - ../../.env
     volumes:

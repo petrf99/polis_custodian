@@ -16,10 +16,10 @@ COPY ../.. /app/
 
 # 📦 Устанавливаем зависимости
 RUN pip install --upgrade pip
-RUN pip install -r app/docker/requirements.txt
+RUN pip install -r application/docker/requirements.txt
 
 # ✅ Устанавливаем PYTHONPATH
 ENV PYTHONPATH=/app
 
 # 💬 На время dev можешь переопределять команду в docker-compose
-CMD ["python", "app/chronicler/main.py"]
+CMD ["python", "application/chronicler/main.py"]
