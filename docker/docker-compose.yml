@@ -4,52 +4,52 @@ services:
 
   chronicler:
     build:
-      context: ../..
-      dockerfile: app/docker/Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: chronicler
     command: ["python", "application/chronicler/main.py"]
     env_file:
-      - ../../.env
+      - ../.env
     volumes:
-      - ../..:/app
+      - ..:/app
     depends_on:
       - redis
     restart: always
 
   companion:
     build:
-      context: ../..
-      dockerfile: app/docker/Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: companion
     command: ["python", "application/companion/main.py"]
     env_file:
-      - ../../.env
+      - ../.env
     volumes:
-      - ../..:/app
+      - ..:/app
     restart: always
 
   dispatcher:
     build:
-      context: ../..
-      dockerfile: app/docker/Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: dispatcher
     command: ["python", "application/dispatcher/dispatcher.py"]
     env_file:
-      - ../../.env
+      - ../.env
     volumes:
-      - ../..:/app
+      - ..:/app
     restart: always
 
   worker:
     build:
-      context: ../..
-      dockerfile: app/docker/Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: celery_worker
     command: ["celery", "-A", "application.dispatcher.celery_app", "worker", "--loglevel=info"]
     env_file:
-      - ../../.env
+      - ../.env
     volumes:
-      - ../..:/app
+      - ..:/app
     depends_on:
       - redis
     restart: always
