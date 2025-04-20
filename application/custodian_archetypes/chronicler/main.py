@@ -1,7 +1,7 @@
 import asyncio
-from ui.bot import start_bot
-from services.db_interaction.init_db import init_db
-from log_setup import setup_logging
+from front.frontend_bot import start_bot
+from application.tech_utils.init_db import init_db
+from application.tech_utils.log_set_up import setup_logging
 from logging import getLogger
 
 def main():

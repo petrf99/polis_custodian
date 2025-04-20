@@ -7,7 +7,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: chronicler
-    command: ["python", "application/chronicler/main.py"]
+    command: ["python", "application/custodian_archetypes/chronicler/main.py"]
     env_file:
       - ../.env
     volumes:
@@ -21,7 +21,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: companion
-    command: ["python", "application/companion/main.py"]
+    command: ["python", "application/custodian_archetypes/sage/main.py"]
     env_file:
       - ../.env
     volumes:

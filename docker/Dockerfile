@@ -22,4 +22,4 @@ RUN pip install -r application/docker/requirements.txt
 ENV PYTHONPATH=/app
 
 # 💬 На время dev можешь переопределять команду в docker-compose
-CMD ["python", "application/chronicler/main.py"]
+CMD ["python", "application/custodian_archetypes/chronicler/main.py"]

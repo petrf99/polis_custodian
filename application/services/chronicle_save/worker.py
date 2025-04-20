@@ -1,5 +1,4 @@
 import json
-import uuid
 import psycopg2
 import os
 from datetime import datetime, timedelta
@@ -84,8 +83,8 @@ def insert_utterances(utterances: list[dict]):
     conn.close()
     logger.info(f"Uploaded {len(utterances)} utterances to Postgres successfully")
 
-from safe_func_dec import safe_run_sync
-@safe_run_sync
+from application.tech_utils.safe_func_run import safe_func_sync
+@safe_func_sync
 def run_import(json_path: str):
     logger.info(f"[IMPORT] Загрузка из {json_path}")
     data = load_json(json_path)

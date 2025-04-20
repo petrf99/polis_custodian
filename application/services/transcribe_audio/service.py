@@ -5,9 +5,9 @@ from pathlib import Path
 import os
 import asyncio
 import datetime
-from jobs.speech2text.whisper_worker import transcribe_audio
-from services.transcript.transcript_duration_estimate import estimate_transcription_time
-from services.ui_utils.tg_audio_download import download_audio_from_telegram
+from application.services.transcribe_audio.worker import transcribe_audio
+from scripts.transcript_duration_estimate import estimate_transcription_time
+from application.tech_utils.tg_audio_download import download_audio_from_telegram
 
 BASE_DIR = Path.cwd()
 audio_save_dir = BASE_DIR / os.getenv("AUDIO_DIR", "temp_data/audio")

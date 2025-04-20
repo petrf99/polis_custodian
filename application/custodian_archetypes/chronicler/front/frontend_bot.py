@@ -7,10 +7,10 @@ import asyncio
 import os
 import datetime
 import uuid
-from services.transcript.run_transcription import run_transcription
-from services.ui_utils.tg_sess_timeout_watcher import start_timeout_watcher
-from ui.create_buttons import create_buttons
-from services.db_interaction.save_to_chronicle import save_to_chronicle
+from application.services.transcribe_audio.service import run_transcription
+from application.tech_utils import start_timeout_watcher
+from create_buttons import create_buttons
+from application.services.chronicle_save.service import save_to_chronicle
 
 from logging import getLogger
 logger = getLogger(__name__)
@@ -26,7 +26,7 @@ class FormStates(StatesGroup):
     waiting_store_decision = State()
 
 # Set up bot
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+BOT_TOKEN = os.getenv("CHRONICLER_BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
