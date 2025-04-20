@@ -6,4 +6,4 @@ __pycache__/
 
 **/temp_data/
 
-"nltk_data/"
+nltk_data/
