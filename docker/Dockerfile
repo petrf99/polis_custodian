@@ -14,9 +14,11 @@ WORKDIR /app
 # 📂 Копируем все исходники
 COPY ../.. /app/
 
+ENV PIP_NO_CACHE_DIR=off
+
 # 📦 Устанавливаем зависимости
 RUN pip install --upgrade pip
-RUN pip install -r application/docker/requirements.txt
+RUN pip install -r docker/requirements.txt
 
 # ✅ Устанавливаем PYTHONPATH
 ENV PYTHONPATH=/app

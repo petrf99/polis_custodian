@@ -6,10 +6,10 @@ import os
 import asyncio
 import datetime
 from application.services.transcribe_audio.worker import transcribe_audio
-from scripts.transcript_duration_estimate import estimate_transcription_time
+from application.services.transcribe_audio.scripts.transcript_duration_estimate import estimate_transcription_time
 from application.tech_utils.tg_audio_download import download_audio_from_telegram
 
-BASE_DIR = Path.cwd()
+BASE_DIR = Path.cwd().parent.parent
 audio_save_dir = BASE_DIR / os.getenv("AUDIO_DIR", "temp_data/audio")
 os.makedirs(audio_save_dir, exist_ok=True)
 
@@ -45,8 +45,8 @@ async def run_transcription(bot: Bot, data: dict):
 
     # Store decision buttons
     store_kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Yes, save it", callback_data=f"store_yes_{data['chat_id']}_{data['session_id']}"),
-        InlineKeyboardButton(text="No, don't save", callback_data=f"store_no_{data['chat_id']}_{data['session_id']}")]
+        [InlineKeyboardButton(text="Yes, save it", callback_data=f"store_yes_{data['chat_id']}_{data['session_id']}_audio"),
+        InlineKeyboardButton(text="No, don't save", callback_data=f"store_no_{data['chat_id']}_{data['session_id']}_audio")]
     ])
 
     await bot.send_message(

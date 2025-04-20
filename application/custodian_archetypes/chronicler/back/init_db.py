@@ -1,6 +1,7 @@
 import psycopg2
 from urllib.parse import urlparse
 import os
+from pathlib import Path
 
 from logging import getLogger
 logger = getLogger(__name__)
@@ -18,7 +19,11 @@ def init_db():
     )
     cursor = conn.cursor()
 
-    with open("jobs/db/sql_scripts/create_tables.sql", "r", encoding="utf-8") as f:
+    base_path = os.path.dirname(__file__)
+    sql_path = os.path.join(base_path, 'sql_scripts', 'create_tables.sql')
+    logger.info(f"SQL_PATH: {sql_path}")
+
+    with open(sql_path, "r", encoding="utf-8") as f:
         schema_sql = f.read()
 
     logger.info("Execute CREATE TABLEs")

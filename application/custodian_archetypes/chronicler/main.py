@@ -1,6 +1,6 @@
 import asyncio
 from front.frontend_bot import start_bot
-from application.tech_utils.init_db import init_db
+from application.custodian_archetypes.chronicler.back.init_db import init_db
 from application.tech_utils.log_set_up import setup_logging
 from logging import getLogger
 

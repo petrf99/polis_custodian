@@ -3,20 +3,22 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
 import os
 import datetime
 import uuid
 from application.services.transcribe_audio.service import run_transcription
-from application.tech_utils import start_timeout_watcher
-from create_buttons import create_buttons
+from application.tech_utils.tg_sess_timeout_watcher import start_timeout_watcher
+from front.create_buttons import create_buttons
 from application.services.chronicle_save.service import save_to_chronicle
+from application.custodian_archetypes.chronicler.back.get_topics_list import get_topics_list
 
 from logging import getLogger
 logger = getLogger(__name__)
 
 
-# FSM: all session states
+# FSM: all file sending session states
 class FormStates(StatesGroup):
     waiting_language = State()
     waiting_model = State()
@@ -24,6 +26,12 @@ class FormStates(StatesGroup):
     waiting_output_type = State()
     waiting_audio = State()
     waiting_store_decision = State()
+
+# FSM: all saving to chronicle session states
+class ChronicleFlow(StatesGroup):
+    waiting_for_topic = State()
+    waiting_for_dialog_name = State()
+ 
 
 # Set up bot
 BOT_TOKEN = os.getenv("CHRONICLER_BOT_TOKEN")
@@ -35,6 +43,8 @@ timeout_seconds = int(os.getenv("TIMEOUT_SECONDS", 600))
 
 # Create buttons
 start_kb, language_kb, model_kb, temp_kb, output_kb = create_buttons()
+
+topics_list = None
 
 # Entry point
 @dp.message(CommandStart())
@@ -151,21 +161,69 @@ async def receive_audio(message: types.Message, state: FSMContext):
 
 
 @dp.callback_query(F.data.startswith("store_"))
-async def store_decision(callback: types.CallbackQuery):
+async def store_decision(callback: types.CallbackQuery, state: FSMContext):
     cb_data = callback.data.split('_')
-    if cb_data[1] == "yes":
+    decision = cb_data[1]
+    chat_id = cb_data[2]
+    session_id = cb_data[3]
+    source = cb_data[4]
+
+    if decision == "yes":
         await callback.message.answer("Your file will be saved to the Chronicle. 🦾")
+
+        # сохраняем chat_id и session_id
+        await state.update_data(chat_id=chat_id, session_id=session_id, source=source)
+
+        topics_list = get_topics_list()  # получи список топиков
+
+        topic_kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text=topic[1], callback_data=f"topicid_{topic[0]}")]
+                for topic in topics_list
+            ]
+        )
+
+        await callback.message.answer("Please select a topic 🗄", reply_markup=topic_kb)
+        await state.set_state(ChronicleFlow.waiting_for_topic)
     else:
         await callback.message.answer("Okay, file will not be saved.")
 
-    
 
-    if cb_data[1] == "yes":
-        asyncio.create_task(save_to_chronicle(bot, cb_data[3], cb_data[2]))
-        logger.info(f'[SEND CHRONICLE SAVING TASK] {cb_data[3]}')
+@dp.callback_query(ChronicleFlow.waiting_for_topic, F.data.startswith("topicid_"))
+async def topic_selected(callback: types.CallbackQuery, state: FSMContext):
+    topic_id = callback.data.split('_')[1]
+    await state.update_data(topic_id=topic_id)
 
-    await bot.send_message(chat_id=cb_data[2], text="Do you want to send another file? 🫴", reply_markup=start_kb)
+    await callback.message.answer("Please enter a name for the dialog 💬")
+    await state.set_state(ChronicleFlow.waiting_for_dialog_name)
 
+
+@dp.message(ChronicleFlow.waiting_for_dialog_name)
+async def dialog_name_received(message: types.Message, state: FSMContext):
+    dialog_name = message.text
+    await state.update_data(dialog_name=dialog_name)
+
+    # собираем всё и передаём в save_to_chronicle
+    data = await state.get_data()
+    chat_id = data['chat_id']
+    session_id = data['session_id']
+    topic_id = data['topic_id']
+    source = data['source']
+
+    await message.answer("Uploading to Chronicle... 📤")
+
+    asyncio.create_task(save_to_chronicle(
+        bot,
+        {'chat_id':chat_id,
+        'session_id':session_id,
+        'topic_id':topic_id,
+        'dialog_name':dialog_name,
+        'source':source}
+    ))
+
+    await message.answer("Do you want to send another file? 🫴", reply_markup=start_kb)
+
+    await state.clear()
 
 # Main loop
 async def start_bot():

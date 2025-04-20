@@ -13,7 +13,7 @@ def load_json(file_path: str):
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def insert_utterances(utterances: list[dict]):
+def insert_utterances(utterances: list[dict], dialog_name, topic_id, source):
     logger.info("[INSERT DATA TO PGSQL. CONNECT TO DB]")
     conn = psycopg2.connect(POSTGRES_URL)
     cursor = conn.cursor()
@@ -40,12 +40,12 @@ def insert_utterances(utterances: list[dict]):
             dialog_insert_query,
             (
                 utterances[0]["dialog_id"], #dialog_id
-                "TEST_" + str(datetime.now()), #title
+                dialog_name, #title
                 datetime.fromisoformat(utterances[0]["created_at"]) + timedelta(seconds=utterances[0]["start_time"]), #started_at
                 datetime.fromisoformat(utterances[0]["created_at"]) + timedelta(seconds=utterances[-1]["end_time"]), #ended_at
-                0, #topic_id
+                topic_id, #topic_id
                 [], #tags
-                "", #source
+                source, #source
                 [], #participants
                 "", #summary
                 json.dumps({}), #metadata
@@ -83,12 +83,12 @@ def insert_utterances(utterances: list[dict]):
     conn.close()
     logger.info(f"Uploaded {len(utterances)} utterances to Postgres successfully")
 
-from application.tech_utils.safe_func_run import safe_func_sync
-@safe_func_sync
-def run_import(json_path: str):
+from application.tech_utils.safe_func_run import safe_run_sync
+@safe_run_sync
+def run_import(json_path: str, dialog_name: str, topic_id: str, source: str):
     logger.info(f"[IMPORT] Загрузка из {json_path}")
     data = load_json(json_path)
-    insert_utterances(data)
+    insert_utterances(data, dialog_name, topic_id, source)
 
 if __name__ == "__main__":
     import sys

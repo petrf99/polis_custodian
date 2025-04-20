@@ -11,7 +11,7 @@ torch.set_num_threads(int(os.getenv("TRANSCRIBE_THREADS", 2)))
 from logging import getLogger
 logger = getLogger(__name__)
 
-from safe_func_dec import safe_run_sync
+from application.tech_utils.safe_func_run import safe_run_sync
 @safe_run_sync
 def transcribe_audio(file_path: str, args: dict) -> list:
     """
@@ -26,9 +26,11 @@ def transcribe_audio(file_path: str, args: dict) -> list:
     session_start_dttm = args.get("session_start_dttm", '')
     output_type = args.get("output_type", "text")
 
-    BASE_DIR = Path.cwd() #Path(__file__).resolve().parent.parent
+    BASE_DIR = Path.cwd().parent.parent #Path(__file__).resolve().parent.parent
     text_save_dir = BASE_DIR / os.getenv("TRANSCRIPTS_DIR", "temp_data/transcripts")
+    json_save_dir = BASE_DIR / os.getenv("SEGMENTS_JSON_DIR", "temp_data/segments_json")
     os.makedirs(text_save_dir, exist_ok=True)
+    os.makedirs(json_save_dir, exist_ok=True)
 
     logger.info(f"[TRANSCRIBE] Starting transcription {session_id}\nModel={model_size}, lang={language}, temp={temperature}")
 
@@ -62,9 +64,8 @@ def transcribe_audio(file_path: str, args: dict) -> list:
             "metadata": {}
         }
         utterances.append(utterance)
-    
-    os.makedirs("jobs/speech2text/temp/", exist_ok=True)
-    with open(f"jobs/speech2text/temp/utterances_{session_id}.json", "w", encoding="utf-8") as f:
+
+    with open(os.path.join(json_save_dir, f"utterances_{session_id}.json"), "w", encoding="utf-8") as f:
         json.dump(utterances, f, ensure_ascii=False, indent=2)
 
 
