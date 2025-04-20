@@ -5,7 +5,7 @@ import asyncio
 import datetime
 from application.services.transcribe_audio.worker import transcribe_audio
 from application.services.transcribe_audio.scripts.transcript_duration_estimate import estimate_transcription_time
-from application.tech_utils.tg_audio_download import download_audio_from_telegram
+from application.tech_utils.tg_file_download import download_file_from_telegram
 from application.tech_utils.notification_center import send_message, send_message_with_buttons, send_document
 
 BASE_DIR = Path.cwd().parent.parent
@@ -19,7 +19,7 @@ async def run_transcription(data: dict):
     session_id = data['session_id']
     chat_id = data['chat_id']
     logger.info(f"[TRANSCRIPT STARTED. DOWNLOAD AUDIO FROM TG] {session_id}")
-    file_path = await download_audio_from_telegram(data['file_id'], audio_save_dir, 'CHRONICLER') #bot, data["file_id"], save_path=audio_save_dir)
+    file_path = await download_file_from_telegram(data['file_id'], audio_save_dir, 'CHRONICLER') #bot, data["file_id"], save_path=audio_save_dir)
     transcript_dur = estimate_transcription_time(file_path, data['model'])
 
     await send_message(f"⏳ Estimated time for transcript:\n\n{str(datetime.timedelta(seconds=transcript_dur))}",

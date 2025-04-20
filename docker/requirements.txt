@@ -8,3 +8,5 @@ pydub
 celery[redis]
 httpx
 hf_xet
+tiktoken
+nltk
