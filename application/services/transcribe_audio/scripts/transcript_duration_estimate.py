@@ -2,13 +2,20 @@ from pydub.utils import mediainfo
 from pydub import AudioSegment
 import json
 import os
-import logging
+from pathlib import Path
 
 from logging import getLogger
 logger = getLogger(__name__)
 
-SPEED_CONFIG_PATH = "services/transcript/configs/whisper_speed_factors.json"
-LOAD_CONFIG_PATH = "services/transcript/configs/whisper_model_load_time.json"
+# Папка, где находится текущий файл transcript_duration_estimate.py
+BASE_DIR = Path(__file__).resolve().parent
+
+# Путь к папке configs
+CONFIGS_DIR = BASE_DIR / "configs"
+
+# Полные пути к JSON-файлам
+SPEED_CONFIG_PATH = CONFIGS_DIR / "whisper_speed_factors.json"
+LOAD_CONFIG_PATH = CONFIGS_DIR / "whisper_model_load_time.json"
 
 if os.path.exists(SPEED_CONFIG_PATH) and os.path.exists(LOAD_CONFIG_PATH):
     with open(SPEED_CONFIG_PATH, "r") as f:

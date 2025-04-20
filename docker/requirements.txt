@@ -6,3 +6,4 @@ python-dotenv
 aiogram==3.4.1
 pydub
 celery[redis]
+httpx

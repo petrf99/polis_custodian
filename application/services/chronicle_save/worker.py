@@ -2,7 +2,6 @@ import json
 import psycopg2
 import os
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from logging import getLogger
 logger = getLogger(__name__)

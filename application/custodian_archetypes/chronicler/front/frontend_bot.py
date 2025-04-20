@@ -148,7 +148,7 @@ async def receive_audio(message: types.Message, state: FSMContext):
             text=f"Transcript ID: {session_id}")
     
     logger.info(f"[SEND TRANSCRIPTION TASK] {data['session_id']}")
-    asyncio.create_task(run_transcription(bot, data))
+    asyncio.create_task(run_transcription(data))
 
 
     logger.info(f"[END SESSION] {data['session_id']}")
@@ -210,10 +210,7 @@ async def dialog_name_received(message: types.Message, state: FSMContext):
     topic_id = data['topic_id']
     source = data['source']
 
-    await message.answer("Uploading to Chronicle... 📤")
-
     asyncio.create_task(save_to_chronicle(
-        bot,
         {'chat_id':chat_id,
         'session_id':session_id,
         'topic_id':topic_id,
