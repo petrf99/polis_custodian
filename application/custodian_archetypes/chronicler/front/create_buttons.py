@@ -23,18 +23,10 @@ def create_buttons():
         InlineKeyboardButton(text="large(x4.0)", callback_data="model_large")]
     ])
 
-    # Temperature buttons
-    temp_kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="0.0 (accurate)", callback_data="temp_0.0"),
-        InlineKeyboardButton(text="0.5 (balanced)", callback_data="temp_0.5")],
-        [InlineKeyboardButton(text="1.0 (creative)", callback_data="temp_1.0")],
-        [InlineKeyboardButton(text="Use default", callback_data="temp_default")]
-    ])
-
     # Output type buttons
     output_kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔤 Full Text", callback_data="output_text"),
         InlineKeyboardButton(text="🔄 Info only", callback_data="output_info")]
     ])
 
-    return start_kb, language_kb, model_kb, temp_kb, output_kb
+    return start_kb, language_kb, model_kb, output_kb

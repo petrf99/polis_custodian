@@ -42,7 +42,7 @@ dp = Dispatcher(storage=MemoryStorage())
 timeout_seconds = int(os.getenv("TIMEOUT_SECONDS", 600))
 
 # Create buttons
-start_kb, language_kb, model_kb, temp_kb, output_kb = create_buttons()
+start_kb, language_kb, model_kb, output_kb = create_buttons()
 
 topics_list = None
 
@@ -96,20 +96,6 @@ async def select_language(callback: types.CallbackQuery, state: FSMContext):
 async def select_model(callback: types.CallbackQuery, state: FSMContext):
     model = callback.data.split("_")[1]
     await state.update_data(model=model)
-    await callback.message.answer(
-        "Select temperature (controls transcription creativity):",
-        reply_markup=temp_kb
-    )
-    await state.set_state(FormStates.waiting_temperature)
-
-    asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_temperature, timeout_seconds=timeout_seconds, callback_message=callback.message, start_kb=start_kb))
-
-
-@dp.callback_query(FormStates.waiting_temperature, F.data.startswith("temp_"))
-async def select_temperature(callback: types.CallbackQuery, state: FSMContext):
-    temp_val = callback.data.split("_")[1]
-    temperature = None if temp_val == "default" else float(temp_val)
-    await state.update_data(temperature=temperature)
     await callback.message.answer("Choose what you want to receive:", reply_markup=output_kb)
     await state.set_state(FormStates.waiting_output_type)
 

@@ -1,7 +1,7 @@
 {
     "tiny": 1,
     "base": 2,
-    "small": 4,
-    "medium": 8,
-    "large": 15
+    "small": 3,
+    "medium": 6,
+    "large": 10
 }

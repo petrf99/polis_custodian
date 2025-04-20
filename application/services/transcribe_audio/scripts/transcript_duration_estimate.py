@@ -26,18 +26,18 @@ else:
     logger.info('Transcript time estimation config load failed!')
     MODEL_SPEED_FACTORS = {
         "tiny": 0.25,
-        "base": 0.5,
+        "base": 0.6,
         "small": 1.0,
-        "medium": 2.0,
-        "large": 4.0
+        "medium": 1.8,
+        "large": 2.7
     }  
 
     MODEL_LOAD_TIME = {
         "tiny": 1,
         "base": 2,
-        "small": 4,
-        "medium": 8,
-        "large": 15
+        "small": 3,
+        "medium": 6,
+        "large": 10
     }
 
 

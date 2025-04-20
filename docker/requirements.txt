@@ -1,4 +1,4 @@
-openai-whisper
+faster-whisper
 ffmpeg-python
 sentence-transformers
 psycopg2-binary
@@ -7,3 +7,4 @@ aiogram==3.4.1
 pydub
 celery[redis]
 httpx
+hf_xet
