@@ -44,7 +44,7 @@ def check_containers():
 def main():
     down = check_containers()
     if down:
-        send_email("🚨 Контейнеры упали", f"Неактивны: {', '.join(down)}")
+        #send_email("🚨 Контейнеры упали", f"Неактивны: {', '.join(down)}")
         print("🚨 Контейнеры упали", f"Неактивны: {', '.join(down)}")
         pass
 

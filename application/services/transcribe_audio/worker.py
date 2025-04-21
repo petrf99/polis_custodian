@@ -19,7 +19,7 @@ def transcribe_audio(file_path: str, args: dict) -> list:
     model_size = args.get("model", "small")
     language = args.get("language", None)
     session_id = args.get("session_id", str(uuid.uuid4()))
-    chat_id = args.get("chat_id", "")
+    user_id = args.get("user_id", "")
     session_start_dttm = args.get("session_start_dttm", '')
     output_type = args.get("output_type", "text")
 
@@ -55,33 +55,59 @@ def transcribe_audio(file_path: str, args: dict) -> list:
 
     logger.info("[FASTER-WHISPER EXECUTED]")
 
-    utterances = []
-    for idx, seg in enumerate(segments):
-        utterance = {
-            "id": str(uuid.uuid4()),
-            "dialog_id": str(session_id),
-            "content": seg.text.strip(),
-            "start_time": seg.start,
-            "end_time": seg.end,
-            "segment_number": idx,
-            "created_at": str(session_start_dttm),
-            "speaker": chat_id,
-            "metadata": {}
-        }
-        utterances.append(utterance)
+    if bool(os.getenv("SEGMENT_AUDIO_AS_TEXT")):
+        full_text = " ".join([seg.text.strip() for seg in segments])
 
-    with open(os.path.join(json_save_dir, f"utterances_{session_id}.json"), "w", encoding="utf-8") as f:
-        json.dump(utterances, f, ensure_ascii=False, indent=2)
+        not_empty_text_flg = False
+        if full_text.strip():
+            not_empty_text_flg = True
 
-    summary = (
-        f"Language: {info.language}\n"
-        f"Model size: {model_size}\n"
-        f"Duration: {round(info.duration, 2)}s\n"
-        f"Segments: {len(utterances)}\n"
-    )
+            filename = f"transcript_{session_id}.txt"
+            file_path_txt = os.path.join(text_save_dir, filename)
+            with open(file_path_txt, "w", encoding="utf-8") as f:
+                f.write(full_text)
+            
+            from application.services.text_processing.worker import segment_text_file
+
+            summary = segment_text_file(file_path_txt, {'session_id':session_id,
+                                            'user_id':user_id,
+                                            'session_start_dttm':session_start_dttm})[0]
+            os.remove(file_path_txt)
+
+    else:
+        utterances = []
+        for idx, seg in enumerate(segments):
+            utterance = {
+                "id": str(uuid.uuid4()),
+                "dialog_id": str(session_id),
+                "content": seg.text.strip(),
+                "start_time": seg.start,
+                "end_time": seg.end,
+                "segment_number": idx,
+                "created_at": str(session_start_dttm),
+                "speaker": user_id,
+                "metadata": {}
+            }
+            utterances.append(utterance)
+
+        with open(os.path.join(json_save_dir, f"utterances_{session_id}.json"), "w", encoding="utf-8") as f:
+            json.dump(utterances, f, ensure_ascii=False, indent=2)
+
+        if utterances:
+            not_empty_text_flg = True
+
+        summary = (
+            f"Language: {info.language}\n"
+            f"Model size: {model_size}\n"
+            f"Duration: {round(info.duration, 2)}s\n"
+            f"Segments: {len(utterances)}\n"
+        )
+
+    with open(os.path.join(json_save_dir, f"utterances_{session_id}.json"), "r", encoding="utf-8") as f:
+        utterances = json.load(f)
 
     file_path_txt = None
-    if output_type == "text" and utterances:
+    if output_type == "text" and not_empty_text_flg:
         transcript = "\n\n".join(u["content"].strip() for u in utterances)
         filename = f"transcript_{session_id}.txt"
         file_path_txt = os.path.join(text_save_dir, filename)
