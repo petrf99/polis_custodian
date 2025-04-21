@@ -2,6 +2,7 @@ import json
 import psycopg2
 import os
 from datetime import datetime, timedelta
+from application.services.chronicle_save.vector_db_save import upload_embeddings
 
 from logging import getLogger
 logger = getLogger(__name__)
@@ -88,6 +89,8 @@ def run_import(json_path: str, dialog_name: str, topic_id: str, source: str):
     logger.info(f"[IMPORT] Загрузка из {json_path}")
     data = load_json(json_path)
     insert_utterances(data, dialog_name, topic_id, source)
+
+    upload_embeddings()
 
 if __name__ == "__main__":
     import sys

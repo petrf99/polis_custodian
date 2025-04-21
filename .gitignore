@@ -8,3 +8,5 @@ __pycache__/
 **/tmp/
 
 nltk_data/
+
+.data/

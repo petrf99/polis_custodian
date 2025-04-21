@@ -45,7 +45,7 @@ services:
       dockerfile: docker/Dockerfile
     container_name: celery_worker_chr
     network_mode: "host"
-    command: ["celery", "-A", "application.dispatcher.celery_app_chr", "worker", "--loglevel=info", "-Q", "chronicle_save,transcribe_audio,process_text"]
+    command: ["celery", "-A", "application.dispatcher.celery_app_chr", "worker", "--loglevel=info", "-Q", "chronicle_save,transcribe_audio,process_text", "--concurrency", "1"]
     env_file:
       - ../.env
     volumes:
@@ -71,3 +71,22 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    ports:
+      - "6333:6333"  # HTTP API
+      - "6334:6334"  # gRPC API
+    volumes:
+      - ../.data/qdrant:/qdrant/storage
+    restart: always
+    network_mode: "host"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+

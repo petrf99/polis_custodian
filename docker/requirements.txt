@@ -10,3 +10,4 @@ httpx
 hf_xet
 tiktoken
 nltk
+qdrant-client
