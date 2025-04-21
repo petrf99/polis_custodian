@@ -13,8 +13,12 @@ from application.tech_utils.tg_sess_timeout_watcher import start_timeout_watcher
 from front.create_buttons import create_buttons
 from application.custodian_archetypes.chronicler.back.get_topics_list import get_topics_list
 from application.custodian_archetypes.chronicler.back.task_manager import chr_tm, ChroniclerTask
+import requests
 from logging import getLogger
 logger = getLogger(__name__)
+
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
 
 
 # FSM
@@ -32,7 +36,26 @@ class ChronicleFlow(StatesGroup):
 
 
 # Set up bot
+def get_ngrok_url():
+    try:
+        resp = requests.get("http://127.0.0.1:4040/api/tunnels")
+        tunnels = resp.json().get("tunnels", [])
+        for tunnel in tunnels:
+            if tunnel["proto"] == "https":
+                return tunnel["public_url"]
+    except Exception as e:
+        print(f"❌ Не удалось получить ngrok URL: {e}")
+        return None
+
+NGROK_URL = get_ngrok_url()
+if not NGROK_URL:
+    raise RuntimeError("Ngrok is not running or not reachable")
+
+
 BOT_TOKEN = os.getenv("CHRONICLER_BOT_TOKEN")
+WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
+WEBHOOK_URL = NGROK_URL + WEBHOOK_PATH
+
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
@@ -277,7 +300,25 @@ async def catch_all(message: types.Message):
     )
 
 
-# Main loop
-async def start_bot():
-    logger.info('[START BOT POLLING]')
-    await dp.start_polling(bot)
+# Set up web server
+async def on_startup(app):
+    await bot.set_webhook(WEBHOOK_URL)
+    logger.info(f"✅ Вебхук установлен: {WEBHOOK_URL}")
+
+async def on_shutdown(app):
+    await bot.delete_webhook()
+    logger.error("❌ Вебхук удалён")
+
+app = web.Application()
+app.on_startup.append(on_startup)
+app.on_shutdown.append(on_shutdown)
+
+# Привязка webhook пути
+SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+setup_application(app, dp, bot=bot)
+
+def start_bot():
+    web.run_app(app, host="0.0.0.0", port=8443)
+
+if __name__ == "__main__":
+    start_bot()

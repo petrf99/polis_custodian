@@ -11,7 +11,7 @@ def main():
     logger.info("[DB INIT STARTED]")
     init_db()
     logger.info("[DB INIT ENDED. STARTING BOT]")
-    asyncio.run(start_bot())
+    start_bot()
 
 if __name__ == "__main__":
     main()

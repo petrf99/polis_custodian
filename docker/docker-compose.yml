@@ -14,6 +14,7 @@ services:
     depends_on:
       - redis
       - celery_worker_chr
+      - ngrok
     restart: always
     logging:
       driver: "json-file"
@@ -88,5 +89,19 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+  
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    network_mode: "host"
+    env_file:
+        - ../.env
+    command: ["http", "127.0.0.1:8443"]
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
