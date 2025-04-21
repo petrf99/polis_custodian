@@ -11,7 +11,9 @@ class ChroniclerTask:
 
 class ChroniclerTM:
     async def create_task(self, task: ChroniclerTask):
+        logger.info("[CHR TASK MANAGER: SENDING TASK TO DISPATCHER]")
         task_id = dispatcher.dispatch_task(task)
+        logger.info("[CHR TASK MANAGER: TASK IS BEEN SENT]")
         return task_id
 
     async def get_status(self, task_id: str):

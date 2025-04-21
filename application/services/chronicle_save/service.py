@@ -21,7 +21,7 @@ async def save_to_chronicle(data):
 
     ut_file_name = os.path.join(json_save_dir, f"utterances_{session_id}.json")
 
-    await send_message(f"⚙️ Your dialog is being uploaded to the Chronicle.\nID: {session_id}\n\nYou will be notified once the upload is done. 🔔",
+    await send_message(f"⚙️ Your file is being uploaded to the Chronicle.\nID: {session_id}\n\nYou will be notified once the upload is done. 🔔",
                  'CHRONICLER', chat_id)
 
 

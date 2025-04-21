@@ -39,33 +39,13 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  dispatcher:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    container_name: dispatcher
-    network_mode: "host"
-    command: ["python", "application/dispatcher/dispatcher.py"]
-    env_file:
-      - ../.env
-    volumes:
-      - ..:/app
-    restart: always
-    depends_on:
-      - redis
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
   celery_worker:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: celery_worker
     network_mode: "host"
-    command: ["celery", "-A", "application.dispatcher.celery_app", "worker", "--loglevel=info"]
+    command: ["celery", "-A", "application.dispatcher.celery_app", "worker", "--loglevel=info", "-Q", "default,low_priority,high_priority"]
     env_file:
       - ../.env
     volumes:

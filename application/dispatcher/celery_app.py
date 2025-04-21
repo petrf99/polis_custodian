@@ -20,3 +20,5 @@ celery_app.conf.task_routes = {
     task_name: {'queue': queue}
     for task_name, queue in task_priorities.items()
 }
+
+from application.dispatcher import celery_tasks

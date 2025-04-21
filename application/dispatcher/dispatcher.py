@@ -2,6 +2,8 @@
 import json
 import os
 from application.dispatcher.celery_app import celery_app
+from logging import getLogger
+logger = getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PRIORITIES_PATH = os.path.join(BASE_DIR, 'configs/task_priorities.json')
@@ -15,6 +17,7 @@ class Dispatcher:
         self.task_map = task_priorities
 
     def dispatch_task(self, task_obj) -> str:
+        logger.info('[DISPATCHER: TASK RECEIVED]')
         service_name = task_obj.service_name
         input_data = task_obj.data
 
@@ -30,7 +33,9 @@ class Dispatcher:
         task_fullname = task_name_map[service_name]
         queue = self.task_map.get(task_fullname, 'default')
 
+        logger.info("[DISPATCHER: SENDING TASK TO CELERY]")
         result = celery_app.send_task(task_fullname, args=[input_data], queue=queue)
+        logger.info("[DISPATCHER: TASK SENT]")
         return result.id
 
 dispatcher = Dispatcher()

@@ -111,10 +111,9 @@ async def initial_file_handler(message: types.Message, state: FSMContext):
         data = await state.get_data()
         await bot.send_message(chat_id=data['chat_id'], text=f"Process ID: `{escape_md(data['session_id'])}`", parse_mode="MarkdownV2")
         
+        logger.info(f"[SEND TEXT PROCESSING TASK] {data['session_id']}")
         await chr_tm.create_task(ChroniclerTask(data, 'text_processing', None))
         #asyncio.create_task(process_text_service(data))
-
-        logger.info(f"[SEND TEXT PROCESSING TASK] {data['session_id']}")
 
         await state.clear()
         await bot.send_message(chat_id=data['chat_id'], text="Session ended 🫡. Ready for another one:", reply_markup=start_kb)
@@ -156,9 +155,9 @@ async def select_output_type(callback: types.CallbackQuery, state: FSMContext):
     session_id = data['session_id']
     await bot.send_message(chat_id=data['chat_id'], text=f"Transcript ID: `{escape_md(session_id)}`", parse_mode="MarkdownV2")
 
+    logger.info(f"[SEND TRANSCRIPTION TASK] {session_id}")
     await chr_tm.create_task(ChroniclerTask(data, 'transcribe_audio', None))
     #asyncio.create_task(run_transcription(data))
-    logger.info(f"[SEND TRANSCRIPTION TASK] {session_id}")
 
     await state.clear()
     await bot.send_message(chat_id=data['chat_id'], text="Session ended 🫡. Ready for another one:", reply_markup=start_kb)
@@ -175,7 +174,7 @@ async def store_decision(callback: types.CallbackQuery, state: FSMContext):
     source = cb_data[4]
 
     if decision == "yes":
-        await callback.message.answer("Your file will be saved to the Chronicle. 🦾")
+        # await callback.message.answer("Your file will be saved to the Chronicle. 🦾")
         await state.update_data(chat_id=chat_id, session_id=session_id, source=source)
 
         topics_list = get_topics_list()
@@ -229,7 +228,7 @@ async def dialog_name_received(message: types.Message, state: FSMContext):
         'source': source
     }, 'chronicle_save', None))
 
-    await message.answer("✅ Saved. Do you want to send another file?", reply_markup=start_kb)
+    await message.answer("🦾 Your file will be saved to the Chronicle. Do you want to send another file?", reply_markup=start_kb)
     await state.clear()
 
 @dp.message(Command(commands=["status"]))
