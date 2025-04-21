@@ -1,0 +1,5 @@
+{
+    "tasks.transcribe_audio": "default",
+    "tasks.segment_text_file": "default",
+    "tasks.chronicle_save": "low_priority"
+}

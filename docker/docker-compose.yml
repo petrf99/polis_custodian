@@ -13,6 +13,7 @@ services:
       - ..:/app
     depends_on:
       - redis
+      - celery_worker
     restart: always
     logging:
       driver: "json-file"
@@ -20,7 +21,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  companion:
+  sage:
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -50,13 +51,15 @@ services:
     volumes:
       - ..:/app
     restart: always
+    depends_on:
+      - redis
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
-  worker:
+  celery_worker:
     build:
       context: ..
       dockerfile: docker/Dockerfile

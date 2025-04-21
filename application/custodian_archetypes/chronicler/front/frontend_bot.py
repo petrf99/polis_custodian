@@ -240,21 +240,37 @@ async def check_status(message: types.Message, command: CommandObject):
         await message.reply("❗ Please provide ID.\nUsage: /status `<id>`")
         return
 
+    session_id = session_id.strip()
+
     try:
-        status = await chr_tm.get_status(session_id.strip())
+        status_info = await chr_tm.get_status(session_id)
     except Exception as e:
         logger.exception(f"[STATUS CHECK ERROR] {e}")
         await message.reply("❌ Error while checking status.")
         return
 
-    if status == "in_progress":
-        await message.reply(f"⏳ Task `{escape_md(session_id)}` is still in progress.", parse_mode="MarkdownV2")
-    elif status == "done":
-        await message.reply(f"✅ Task `{escape_md(session_id)}` has been completed\!", parse_mode="MarkdownV2")
-    elif status == "failed":
-        await message.reply(f"❌ Task `{escape_md(session_id)}` failed to process.", parse_mode="MarkdownV2")
+    task_status = status_info.get("status")
+
+    if task_status in ("PENDING", "STARTED"):
+        await message.reply(
+            f"⏳ Task `{escape_md(session_id)}` is still in progress. Please wait.",
+            parse_mode="MarkdownV2"
+        )
+    elif task_status == "SUCCESS":
+        await message.reply(
+            f"✅ Task `{escape_md(session_id)}` has been completed\!",
+            parse_mode="MarkdownV2"
+        )
+    elif task_status == "FAILURE":
+        await message.reply(
+            f"❌ Task `{escape_md(session_id)}` failed to process. Please try again or reduce the size of the file.",
+            parse_mode="MarkdownV2"
+        )
     else:
-        await message.reply(f"⚠️ No task found with ID `{escape_md(session_id)}`", parse_mode="MarkdownV2")
+        await message.reply(
+            f"⚠️ No task found with ID `{escape_md(session_id)}`. Have you sent a correct ID?",
+            parse_mode="MarkdownV2"
+        )
 
 
 

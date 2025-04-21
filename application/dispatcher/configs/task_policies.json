@@ -1,0 +1,15 @@
+{
+    "tasks.transcribe_audio": {
+      "retry_backoff": true,
+      "retry_kwargs": {"max_retries": 2}
+    },
+    "tasks.segment_text_file": {
+      "soft_time_limit": 300,
+      "retry_kwargs": {"max_retries": 5}
+    },
+    "tasks.chronicle_save": {
+      "soft_time_limit": 120,
+      "retry_kwargs": {"max_retries": 3}
+    }
+  }
+  
