@@ -13,7 +13,7 @@ services:
       - ..:/app
     depends_on:
       - redis
-      - celery_worker
+      - celery_worker_chr
     restart: always
     logging:
       driver: "json-file"
@@ -39,13 +39,13 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  celery_worker:
+  celery_worker_chr:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: celery_worker
+    container_name: celery_worker_chr
     network_mode: "host"
-    command: ["celery", "-A", "application.dispatcher.celery_app", "worker", "--loglevel=info", "-Q", "default,low_priority,high_priority"]
+    command: ["celery", "-A", "application.dispatcher.celery_app_chr", "worker", "--loglevel=info", "-Q", "chronicle_save,transcribe_audio,process_text"]
     env_file:
       - ../.env
     volumes:

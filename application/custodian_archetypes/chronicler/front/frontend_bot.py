@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import CommandStart, CommandObject, Command
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup, default_state
+from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
@@ -52,10 +52,45 @@ async def cmd_start(message: types.Message):
     )
     logger.info('[BOT IS WORKING]')
 
+@dp.message(Command(commands=["status"]))
+async def check_status(message: types.Message, command: CommandObject):
+    session_id = command.args
 
-@dp.message(F.state == default_state)
-async def catch_all(message: types.Message):
-    await message.reply("Please use the 'Send file' button to begin a session ⛔ or /status `<id>` to get the status of your task", reply_markup=start_kb)
+    if not session_id:
+        await message.reply("❗ Please provide ID.\nUsage: /status `<id>`")
+        return
+
+    session_id = session_id.strip()
+
+    try:
+        status_info = await chr_tm.get_status(session_id)
+    except Exception as e:
+        logger.exception(f"[STATUS CHECK ERROR] {e}")
+        await message.reply("❌ Error while checking status.")
+        return
+
+    task_status = status_info.get("status")
+
+    if task_status in ("PENDING", "STARTED"):
+        await message.reply(
+            f"⏳ Task `{escape_md(session_id)}` is still in progress\. Please wait\.",
+            parse_mode="MarkdownV2"
+        )
+    elif task_status == "SUCCESS":
+        await message.reply(
+            f"✅ Task `{escape_md(session_id)}` has been completed\!",
+            parse_mode="MarkdownV2"
+        )
+    elif task_status == "FAILURE":
+        await message.reply(
+            f"❌ Task `{escape_md(session_id)}` failed to process\. Please try again or reduce the size of the file\.",
+            parse_mode="MarkdownV2"
+        )
+    else:
+        await message.reply(
+            f"⚠️ No task found with ID `{escape_md(session_id)}`\. Have you sent a correct ID\?",
+            parse_mode="MarkdownV2"
+        )
 
 
 @dp.callback_query(F.data == "start_session")
@@ -79,7 +114,8 @@ async def start_session(callback: types.CallbackQuery, state: FSMContext):
 
 
 
-@dp.message(FormStates.waiting_file)
+@dp.message(
+    FormStates.waiting_file)
 async def initial_file_handler(message: types.Message, state: FSMContext):
     chat_id = message.chat.id
 
@@ -231,46 +267,14 @@ async def dialog_name_received(message: types.Message, state: FSMContext):
     await message.answer("🦾 Your file will be saved to the Chronicle. Do you want to send another file?", reply_markup=start_kb)
     await state.clear()
 
-@dp.message(Command(commands=["status"]))
-async def check_status(message: types.Message, command: CommandObject):
-    session_id = command.args
+from aiogram.filters import StateFilter
 
-    if not session_id:
-        await message.reply("❗ Please provide ID.\nUsage: /status `<id>`")
-        return
-
-    session_id = session_id.strip()
-
-    try:
-        status_info = await chr_tm.get_status(session_id)
-    except Exception as e:
-        logger.exception(f"[STATUS CHECK ERROR] {e}")
-        await message.reply("❌ Error while checking status.")
-        return
-
-    task_status = status_info.get("status")
-
-    if task_status in ("PENDING", "STARTED"):
-        await message.reply(
-            f"⏳ Task `{escape_md(session_id)}` is still in progress. Please wait.",
-            parse_mode="MarkdownV2"
-        )
-    elif task_status == "SUCCESS":
-        await message.reply(
-            f"✅ Task `{escape_md(session_id)}` has been completed\!",
-            parse_mode="MarkdownV2"
-        )
-    elif task_status == "FAILURE":
-        await message.reply(
-            f"❌ Task `{escape_md(session_id)}` failed to process. Please try again or reduce the size of the file.",
-            parse_mode="MarkdownV2"
-        )
-    else:
-        await message.reply(
-            f"⚠️ No task found with ID `{escape_md(session_id)}`. Have you sent a correct ID?",
-            parse_mode="MarkdownV2"
-        )
-
+@dp.message(StateFilter(None))
+async def catch_all(message: types.Message):
+    await message.reply(
+        "Please use the 'Send file' button to begin a session ⛔ or /status `<id>` to get the status of your task",
+        reply_markup=start_kb
+    )
 
 
 # Main loop
