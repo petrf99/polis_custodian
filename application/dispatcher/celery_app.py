@@ -1,6 +1,12 @@
 from celery import Celery
 
-celery = Celery(
-    "stub",
-    broker="redis://redis:6379/0",  # указываем, что брокер — это контейнер redis
+celery_app = Celery(
+    'task_dispatcher',
+    broker='redis://localhost:6379/0',
+    backend='redis://localhost:6379/1'
 )
+
+celery_app.conf.task_routes = {
+    'tasks.transcribe.transcribe_audio': {'queue': 'high_priority'},
+    'tasks.segment.segment_text': {'queue': 'default'},
+}

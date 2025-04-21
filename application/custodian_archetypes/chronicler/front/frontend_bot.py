@@ -1,5 +1,5 @@
 from aiogram import Bot, Dispatcher, F, types
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, CommandObject, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -8,13 +8,11 @@ import asyncio
 import os
 import datetime
 import uuid
-from application.services.transcribe_audio.service import run_transcription
+from application.tech_utils.escape_md import escape_md
 from application.tech_utils.tg_sess_timeout_watcher import start_timeout_watcher
 from front.create_buttons import create_buttons
-from application.services.chronicle_save.service import save_to_chronicle
 from application.custodian_archetypes.chronicler.back.get_topics_list import get_topics_list
-from application.services.text_processing.service import process_text_service
-
+from application.custodian_archetypes.chronicler.back.task_manager import chr_tm, ChroniclerTask
 from logging import getLogger
 logger = getLogger(__name__)
 
@@ -57,7 +55,7 @@ async def cmd_start(message: types.Message):
 
 @dp.message(F.state == default_state)
 async def catch_all(message: types.Message):
-    await message.reply("Please use the 'Send file' button to begin a session ⛔", reply_markup=start_kb)
+    await message.reply("Please use the 'Send file' button to begin a session ⛔ or /status `<id>` to get the status of your task", reply_markup=start_kb)
 
 
 @dp.callback_query(F.data == "start_session")
@@ -96,7 +94,7 @@ async def initial_file_handler(message: types.Message, state: FSMContext):
         await message.answer("Choose the language of your audio:", reply_markup=language_kb)
         await state.set_state(FormStates.waiting_language)
 
-        asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_language, timeout_seconds=timeout_seconds, callback_message=callback.message, start_kb=start_kb))
+        asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_language, timeout_seconds=timeout_seconds, callback_message=message, start_kb=start_kb))
 
         return
 
@@ -111,8 +109,10 @@ async def initial_file_handler(message: types.Message, state: FSMContext):
             await state.update_data(raw_text=message.text, file_type='text_message', chat_id=chat_id)
         
         data = await state.get_data()
-        await bot.send_message(chat_id=data['chat_id'], text=f"Transcript ID: {data['session_id']}")
-        asyncio.create_task(process_text_service(data))
+        await bot.send_message(chat_id=data['chat_id'], text=f"Process ID: `{escape_md(data['session_id'])}`", parse_mode="MarkdownV2")
+        
+        await chr_tm.create_task(ChroniclerTask(data, 'text_processing', None))
+        #asyncio.create_task(process_text_service(data))
 
         logger.info(f"[SEND TEXT PROCESSING TASK] {data['session_id']}")
 
@@ -154,9 +154,10 @@ async def select_output_type(callback: types.CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
     session_id = data['session_id']
-    await bot.send_message(chat_id=data['chat_id'], text=f"Transcript ID: {session_id}")
+    await bot.send_message(chat_id=data['chat_id'], text=f"Transcript ID: `{escape_md(session_id)}`", parse_mode="MarkdownV2")
 
-    asyncio.create_task(run_transcription(data))
+    await chr_tm.create_task(ChroniclerTask(data, 'transcribe_audio', None))
+    #asyncio.create_task(run_transcription(data))
     logger.info(f"[SEND TRANSCRIPTION TASK] {session_id}")
 
     await state.clear()
@@ -213,16 +214,48 @@ async def dialog_name_received(message: types.Message, state: FSMContext):
     topic_id = data['topic_id']
     source = data['source']
 
-    asyncio.create_task(save_to_chronicle({
+    #asyncio.create_task(save_to_chronicle({
+    #    'chat_id': chat_id,
+    #    'session_id': session_id,
+    #    'topic_id': topic_id,
+    #    'dialog_name': dialog_name,
+    #    'source': source
+    #}))
+    await chr_tm.create_task(ChroniclerTask({
         'chat_id': chat_id,
         'session_id': session_id,
         'topic_id': topic_id,
         'dialog_name': dialog_name,
         'source': source
-    }))
+    }, 'chronicle_save', None))
 
     await message.answer("✅ Saved. Do you want to send another file?", reply_markup=start_kb)
     await state.clear()
+
+@dp.message(Command(commands=["status"]))
+async def check_status(message: types.Message, command: CommandObject):
+    session_id = command.args
+
+    if not session_id:
+        await message.reply("❗ Please provide ID.\nUsage: /status `<id>`")
+        return
+
+    try:
+        status = await chr_tm.get_status(session_id.strip())
+    except Exception as e:
+        logger.exception(f"[STATUS CHECK ERROR] {e}")
+        await message.reply("❌ Error while checking status.")
+        return
+
+    if status == "in_progress":
+        await message.reply(f"⏳ Task `{escape_md(session_id)}` is still in progress.", parse_mode="MarkdownV2")
+    elif status == "done":
+        await message.reply(f"✅ Task `{escape_md(session_id)}` has been completed\!", parse_mode="MarkdownV2")
+    elif status == "failed":
+        await message.reply(f"❌ Task `{escape_md(session_id)}` failed to process.", parse_mode="MarkdownV2")
+    else:
+        await message.reply(f"⚠️ No task found with ID `{escape_md(session_id)}`", parse_mode="MarkdownV2")
+
 
 
 # Main loop

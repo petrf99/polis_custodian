@@ -1,9 +1,11 @@
 import os
 import httpx
+from application.tech_utils.escape_md import escape_md
 from logging import getLogger
 
 logger = getLogger(__name__)
 
+PARSE_MODE = "MarkdownV2"
 
 async def send_http(url, payload, files=None):
     async with httpx.AsyncClient() as client:
@@ -27,8 +29,8 @@ async def send_message(text, archetype, chat_id):
 
     payload = {
         "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "HTML"
+        "text": escape_md(text),
+        "parse_mode": PARSE_MODE
     }
 
     response = await send_http(url, payload)
@@ -49,9 +51,9 @@ async def send_message_with_buttons(text, keyboard_dict, archetype, chat_id):
 
     payload = {
         "chat_id": chat_id,
-        "text": text,
+        "text": escape_md(text),
         "reply_markup": keyboard,
-        "parse_mode": "HTML"
+        "parse_mode": PARSE_MODE
     }
 
     response = await send_http(url, payload)
@@ -67,10 +69,11 @@ async def send_document(file_path, archetype, chat_id, caption=None):
     with open(file_path, "rb") as file:
         files = {"document": (os.path.basename(file_path), file)}
         payload = {
-            "chat_id": chat_id
+            "chat_id": chat_id,
+            "parse_mode": "MarkdownV2"
         }
         if caption:
-            payload["caption"] = caption
+            payload["caption"] = escape_md(caption)
 
         response = await send_http(url, payload, files=files)
         logger.debug(f"[send_message] got: {response} ({type(response)})")

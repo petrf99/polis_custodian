@@ -44,7 +44,7 @@ def transcribe_audio(file_path: str, args: dict) -> list:
         cpu_threads=cpu_threads
     )
 
-    logger.info("[EXECUTE FASTER-WHISPER]")
+    logger.info("[EXECUTING FASTER-WHISPER]")
 
     segments, info = model.transcribe(
         file_path,

@@ -2,6 +2,7 @@
 from pathlib import Path
 import os
 import asyncio
+from application.tech_utils.escape_md import escape_md
 from application.services.text_processing.worker import segment_text_file
 from application.tech_utils.tg_file_download import download_file_from_telegram
 from application.tech_utils.notification_center import send_message, send_message_with_buttons, send_document
@@ -28,7 +29,7 @@ async def process_text_service(data: dict):
     result = await asyncio.to_thread(segment_text_file, file_path, data)
     logger.info(f"[TEXT PROCESSING ENDED] {session_id}")
 
-    await send_message(f"✅ Done! Here is some info about your text 👇\nID: {session_id}\n\n{result[0]}",
+    await send_message(f"✅ Done! Here is some info about your text 👇\nID: {(session_id)}\n\n{result[0]}",
                        'CHRONICLER', chat_id)
 
     if result[1] is not None:

@@ -3,6 +3,7 @@ from aiogram import Bot
 from pathlib import Path
 import os
 from application.tech_utils.notification_center import send_message
+from application.tech_utils.escape_md import escape_md
 
 from logging import getLogger
 logger = getLogger(__name__)

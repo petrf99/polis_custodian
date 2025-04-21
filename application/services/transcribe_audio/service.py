@@ -29,7 +29,7 @@ async def run_transcription(data: dict):
     result = await asyncio.to_thread(transcribe_audio, file_path, data)
     logger.info("[WHISPER JOB ENDED]")
 
-    await send_message(f"✅ Done! Here is some info about your transcript 👇\nID: {session_id}\n\n{result[0]}",
+    await send_message(f"✅ Done! Here is some info about your transcript 👇\nID: {(session_id)}\n\n{result[0]}",
                        'CHRONICLER', chat_id)
 
     if result[1] is not None:
