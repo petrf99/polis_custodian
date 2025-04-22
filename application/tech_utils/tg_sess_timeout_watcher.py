@@ -17,7 +17,8 @@ async def start_timeout_watcher(
     await asyncio.sleep(timeout_seconds)
     current = await state.get_state()
     if current == target_state.state:
-        session_id = await state.get_data['session_id']
+        data = await state.get_data()
+        session_id = data.get("session_id", "unknown")  
         logger.info(f"[SESSION {session_id} EXPIRED DUE TO INACTIVITY]")
         await state.clear()
         await callback_message.answer(

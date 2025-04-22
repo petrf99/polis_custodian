@@ -130,7 +130,7 @@ async def start_session(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(session_start_dttm=datetime.datetime.now().isoformat())
     await state.update_data(user_id=callback.from_user.id)
 
-    await callback.message.answer("📥 Please send an audio file / voice message or text (.txt or just type it):")
+    await callback.message.answer("📥 Please send an audio file / voice message or text (.txt or just type it)\n\n⚠️ Note: max file size via Telegram - 20MB.")
     await state.set_state(FormStates.waiting_file)
 
     asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_file, timeout_seconds=timeout_seconds, callback_message=callback.message, start_kb=start_kb))
@@ -147,6 +147,22 @@ async def initial_file_handler(message: types.Message, state: FSMContext):
     # AUDIO
     if file and (message.voice or message.audio or 
                 (message.document and message.document.mime_type.startswith("audio/"))):
+        
+        MAX_SIZE = 20 * 1024 * 1024  # 20 MB
+
+        file_size = (
+            (message.document and message.document.file_size) or
+            (message.voice and message.voice.file_size) or
+            (message.audio and message.audio.file_size)
+        )
+
+        if file_size and file_size > MAX_SIZE:
+            await message.answer("⚠️ File is too big... Max size — 20MB. Please send another file.")
+            await state.set_state(FormStates.waiting_file)
+
+            asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_file, timeout_seconds=timeout_seconds, callback_message=message, start_kb=start_kb))
+            return
+
         await message.reply("🎧 Audio received. Let's configure transcription.")
         await state.update_data(file_id=file.file_id, file_type='audio', chat_id=chat_id)
 
@@ -295,7 +311,7 @@ from aiogram.filters import StateFilter
 @dp.message(StateFilter(None))
 async def catch_all(message: types.Message):
     await message.reply(
-        "Please use the 'Send file' button to begin a session ⛔ or /status `<id>` to get the status of your task",
+        "Please use the 'Send file' button to begin a session or /status `<id>` to get the status of your task ⛔",
         reply_markup=start_kb
     )
 

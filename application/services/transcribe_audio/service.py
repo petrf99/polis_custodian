@@ -19,6 +19,7 @@ async def run_transcription(data: dict):
     session_id = data['session_id']
     chat_id = data['chat_id']
     logger.info(f"[TRANSCRIPT STARTED. DOWNLOAD AUDIO FROM TG] {session_id}")
+    logger.info(f"[TG-DL] Trying to download: {data['file_id']}")
     file_path = await download_file_from_telegram(data['file_id'], audio_save_dir, 'CHRONICLER') #bot, data["file_id"], save_path=audio_save_dir)
     transcript_dur = estimate_transcription_time(file_path, data['model'])
 
