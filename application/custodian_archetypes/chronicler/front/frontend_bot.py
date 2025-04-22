@@ -14,6 +14,7 @@ from front.create_buttons import create_buttons
 from application.custodian_archetypes.chronicler.back.get_topics_list import get_topics_list
 from application.custodian_archetypes.chronicler.back.task_manager import chr_tm, ChroniclerTask
 import requests
+import re
 from logging import getLogger
 logger = getLogger(__name__)
 
@@ -27,6 +28,7 @@ class FormStates(StatesGroup):
     waiting_model = State()
     waiting_output_type = State()
     waiting_file = State()
+    waiting_fileio_type = State()
 
 
 # FSM: общий для Chronicle
@@ -74,6 +76,12 @@ async def cmd_start(message: types.Message):
         reply_markup=start_kb
     )
     logger.info('[BOT IS WORKING]')
+
+@dp.message(Command(commands=["reset", "stop", "restart"]))
+async def reset_session(message: types.Message, command: CommandObject, state: FSMContext):
+    await state.clear()
+    chat_id = message.chat.id
+    await bot.send_message(chat_id=chat_id, text="Session terminated 🫡. Ready for another one:", reply_markup=start_kb)
 
 @dp.message(Command(commands=["status"]))
 async def check_status(message: types.Message, command: CommandObject):
@@ -130,7 +138,7 @@ async def start_session(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(session_start_dttm=datetime.datetime.now().isoformat())
     await state.update_data(user_id=callback.from_user.id)
 
-    await callback.message.answer("📥 Please send an audio file / voice message or text (.txt or just type it)\n\n⚠️ Note: max file size via Telegram - 20MB.")
+    await callback.message.answer("📥 Please send an audio file / voice message or text (.txt or just type it)\n\n⚠️Note: max file size via Telegram - 20MB.\n\n☝🏻 If your file exceed this limit please upload it to https://tmpfiles.org and send the link to the chat.")
     await state.set_state(FormStates.waiting_file)
 
     asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_file, timeout_seconds=timeout_seconds, callback_message=callback.message, start_kb=start_kb))
@@ -144,24 +152,24 @@ async def initial_file_handler(message: types.Message, state: FSMContext):
 
     file = message.voice or message.audio or message.document
 
-    # AUDIO
-    if file and (message.voice or message.audio or 
-                (message.document and message.document.mime_type.startswith("audio/"))):
-        
-        MAX_SIZE = 20 * 1024 * 1024  # 20 MB
+    MAX_SIZE = 20 * 1024 * 1024  # 20 MB
 
-        file_size = (
+    file_size = (
             (message.document and message.document.file_size) or
             (message.voice and message.voice.file_size) or
             (message.audio and message.audio.file_size)
         )
 
-        if file_size and file_size > MAX_SIZE:
-            await message.answer("⚠️ File is too big... Max size — 20MB. Please send another file.")
-            await state.set_state(FormStates.waiting_file)
+    if file_size and file_size > MAX_SIZE:
+        await message.answer("⚠️ File is too big... Max size — 20MB.\n\nPlease upload it to https://tmpfiles.org and send the link to the chat")
+        await state.set_state(FormStates.waiting_file)
 
-            asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_file, timeout_seconds=timeout_seconds, callback_message=message, start_kb=start_kb))
-            return
+        asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_file, timeout_seconds=timeout_seconds, callback_message=message, start_kb=start_kb))
+        return
+
+    # AUDIO
+    if file and (message.voice or message.audio or 
+                (message.document and message.document.mime_type.startswith("audio/"))):
 
         await message.reply("🎧 Audio received. Let's configure transcription.")
         await state.update_data(file_id=file.file_id, file_type='audio', chat_id=chat_id)
@@ -175,27 +183,70 @@ async def initial_file_handler(message: types.Message, state: FSMContext):
 
     # TEXT
     elif (message.document and message.document.mime_type == "text/plain") or message.text:
-        if not message.text:
+
+        FILE_IO_REGEX = r"https:\/\/tmpfiles\.org\/(?:dl\/)?[a-zA-Z0-9\/\-_\.]+"
+        # === File share LINK ===
+        if message.text and re.match(FILE_IO_REGEX, message.text.strip()):
+            url = message.text.strip()
+            file_io_type_kb = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="📝 Text", callback_data="fileio_type_text")],
+                [InlineKeyboardButton(text="🎧 Audio", callback_data="fileio_type_audio")]
+            ])
+            await message.reply("📁 Got the link. Please specify the type of the file.", reply_markup=file_io_type_kb)
+
+            await state.update_data(file_id=url, file_type='file_io_link', chat_id=chat_id)
+
+            await state.set_state(FormStates.waiting_fileio_type)
+
+            asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_fileio_type, timeout_seconds=timeout_seconds, callback_message=message, start_kb=start_kb))
+            return
+
+        # === plain .txt file ===
+        if message.document:
             await message.reply("📄 Text file received. It's being processed. Please wait.")
             await state.update_data(file_id=message.document.file_id, file_type='text_file', chat_id=chat_id)
-            # await state.set_state(TextFlow.waiting_store_decision)
+
+        # === plain text ===
         else:
             await message.reply("📝 Text message received. It's being processed. Please wait.")
             await state.update_data(raw_text=message.text, file_type='text_message', chat_id=chat_id)
-        
+
         data = await state.get_data()
         await bot.send_message(chat_id=data['chat_id'], text=f"Process ID: `{escape_md(data['session_id'])}`", parse_mode="MarkdownV2")
-        
-        logger.info(f"[SEND TEXT PROCESSING TASK] {data['session_id']}")
+
+        logger.info(f"[SEND TEXT TASK] {data['session_id']}")
         await chr_tm.create_task(ChroniclerTask(data, 'text_processing', None))
-        #asyncio.create_task(process_text_service(data))
 
         await state.clear()
         await bot.send_message(chat_id=data['chat_id'], text="Session ended 🫡. Ready for another one:", reply_markup=start_kb)
         return
-
     else:
         await message.reply("❌ Unsupported file type. Please send audio or plain text.")
+        return
+
+
+@dp.callback_query(FormStates.waiting_fileio_type, F.data.in_(["fileio_type_text", "fileio_type_audio"]))
+async def handle_fileio_type(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    task_type = "text_processing" if callback.data == "fileio_type_text" else "transcribe_audio"
+
+    if task_type == "text_processing":
+        await bot.send_message(chat_id=data['chat_id'], text=f"Process ID: `{escape_md(data['session_id'])}`", parse_mode="MarkdownV2")
+
+        logger.info(f"[SEND TEXT TASK] {data['session_id']}")
+        await chr_tm.create_task(ChroniclerTask(data, task_type, None))
+
+        await state.clear()
+        await bot.send_message(chat_id=data['chat_id'], text="Session ended 🫡. Ready for another one:", reply_markup=start_kb)
+        
+        return
+    else:
+        await callback.message.answer("Choose the language of your audio:", reply_markup=language_kb)
+        await state.set_state(FormStates.waiting_language)
+
+        asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_language, timeout_seconds=timeout_seconds, callback_message=callback.message, start_kb=start_kb))
+
+        return
 
 
 @dp.callback_query(FormStates.waiting_language, F.data.startswith("lang_"))

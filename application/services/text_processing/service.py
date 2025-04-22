@@ -17,9 +17,12 @@ logger = getLogger(__name__)
 async def process_text_service(data: dict):
     session_id = data['session_id']
     chat_id = data['chat_id']
-    if data['file_type'] == 'text_file':
+    if data['file_type'] in ('text_file', 'file_io_link'):
         logger.info(f"[DOWNLOAD TEXT FILE FROM TG] {session_id}")
-        file_path = await download_file_from_telegram(data['file_id'], text_save_dir, 'CHRONICLER') 
+        file_path = await download_file_from_telegram(data['file_id'], 
+                                                      text_save_dir, 
+                                                      'CHRONICLER',
+                                                      file_type=data.get("file_type", "telegram")) 
     elif data['file_type'] == 'text_message':
         file_path = os.path.join(text_save_dir, f"text_{session_id}.txt")
         with open(file_path, "w", encoding="utf-8") as f:
