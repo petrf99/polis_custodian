@@ -1,0 +1,20 @@
+[NUMBER OF SUMMARIES] 6
+
+[SUMMARY 1]
+<extra_id_0>. - Страница 1 из 1. 2. 3. 4. 5. 6. 7. .... <extra_id_20> <extra_id_55>. - 3. 2. 3. .... ....
+
+[SUMMARY 2]
+<extra_id_0> и т.д.)).) ) ) ) ) ) ) ) 1.) 1.)
+
+[SUMMARY 3]
+<extra_id_0> и т.д.))..).. <extra_id_20> <extra_id_55>. <extra_id_56>. <extra_id_56>. <extra_id_56> <extra_id_56>. <extra_id_56>. <extra_id_56>..
+
+[SUMMARY 4]
+<extra_id_0> и коллегиальных проектов..))))))))))))))))))
+
+[SUMMARY 5]
+<extra_id_0> и т.д.) ) ) )))))))))))))))
+
+[SUMMARY 6]
+<extra_id_0>, а не только брать..))))))))))))))))))
+

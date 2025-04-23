@@ -11,6 +11,7 @@ services:
       - ../.env
     volumes:
       - ..:/app
+      - /mnt/HC_Volume_102463375/huggingface:/root/.cache/huggingface
     depends_on:
       - redis
       - celery_worker_chr
@@ -33,6 +34,7 @@ services:
       - ../.env
     volumes:
       - ..:/app
+      - /mnt/HC_Volume_102463375/huggingface:/root/.cache/huggingface
     depends_on:
       - redis
       - celery_worker_chr
@@ -55,6 +57,7 @@ services:
       - ../.env
     volumes:
       - ..:/app
+      - /mnt/HC_Volume_102463375/huggingface:/root/.cache/huggingface
     depends_on:
       - redis
     restart: always
@@ -75,6 +78,7 @@ services:
       - ../.env
     volumes:
       - ..:/app
+      - /mnt/HC_Volume_102463375/huggingface:/root/.cache/huggingface
     depends_on:
       - redis
     restart: always

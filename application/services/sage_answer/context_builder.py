@@ -110,7 +110,7 @@ def build_chunks_from_vector(vector: List[float], search_width: int, depth: int 
 
         # 3.2 Данные о диалоге и топике
         cursor.execute("""
-            SELECT d.title AS dialog_title, d.started_at, t.name AS topic_name
+            SELECT d.title AS dialog_title, d.started_at::date, t.name AS topic_name
             FROM dialogs d
             JOIN topics t ON d.topic_id = t.id
             WHERE d.id = %s;
@@ -124,7 +124,7 @@ def build_chunks_from_vector(vector: List[float], search_width: int, depth: int 
             "dialog_id": dialog_id,
             "source_utterance_ids": utterance_ids_by_dialog[dialog_id],
             "utterances": [
-                {"speaker": row["speaker"], "text": row["content"]}
+                {"text": row["content"]}
                 for row in utterances
             ]
         }
@@ -146,7 +146,7 @@ def format_chunks_for_telegram(chunks: List[Dict[str, Any]], max_chunks: int = 3
                  f"<i>Date:</i> {chunk['datetime']}\n\n"
 
         utterances = "\n".join(
-            f"<b>{u['speaker']}:</b> {u['text']}" for u in chunk["utterances"]
+            f"{u['text']}" for u in chunk["utterances"]
         )
 
         parts.append(header + utterances)
@@ -163,7 +163,7 @@ def format_chunks_as_prompt(chunks: List[Dict[str, Any]], max_chunks: int = 3) -
                  f"Date: {chunk['datetime']}\n\n"
 
         utterances = "\n".join(
-            f"{u['speaker']}: {u['text']}" for u in chunk["utterances"]
+            f"{u['text']}" for u in chunk["utterances"]
         )
 
         prompt_parts.append(header + utterances)

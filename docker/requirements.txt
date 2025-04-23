@@ -13,3 +13,5 @@ nltk
 qdrant-client
 transformers>=4.36.0
 optimum>=1.13.2
+llama-cpp-python>=0.2.24
+sentencepiece>=0.1.99
