@@ -10,3 +10,6 @@ __pycache__/
 nltk_data/
 
 ngrok.yml
+
+summaries_*.txt
+full_chunk*.txt
