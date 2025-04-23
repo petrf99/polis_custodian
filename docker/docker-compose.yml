@@ -105,7 +105,7 @@ services:
       - "6333:6333"  # HTTP API
       - "6334:6334"  # gRPC API
     volumes:
-      - ../.data/qdrant:/qdrant/storage
+      - /mnt/HC_Volume_102463375/qdrant:/qdrant/storage
     restart: always
     network_mode: "host"
     logging:
