@@ -16,7 +16,7 @@ load_dotenv(dotenv_path)
 
 
 # Конфигурация
-CONTAINERS = ["chronicler", "celery_worker_chr", "redis"]
+CONTAINERS = ["chronicler", "sage", "celery_worker_chr", "redis"]
 CHECK_INTERVAL = int(os.getenv("HEALTHCHECK_INTERVAL"))  # секунд
 EMAIL = os.getenv("HEALTHCHECK_EMAIL")
 SMTP_SERVER = os.getenv("HEALTHCHECK_SMTP_SERVER")
@@ -44,7 +44,7 @@ def check_containers():
 def main():
     down = check_containers()
     if down:
-        send_email("🚨 Контейнеры упали", f"Неактивны: {', '.join(down)}")
+        #send_email("🚨 Контейнеры упали", f"Неактивны: {', '.join(down)}")
         print("🚨 Контейнеры упали", f"Неактивны: {', '.join(down)}")
         pass
 

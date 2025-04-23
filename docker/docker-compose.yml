@@ -33,6 +33,10 @@ services:
       - ../.env
     volumes:
       - ..:/app
+    depends_on:
+      - redis
+      - celery_worker_chr
+      - ngrok
     restart: always
     logging:
       driver: "json-file"
@@ -47,6 +51,26 @@ services:
     container_name: celery_worker_chr
     network_mode: "host"
     command: ["celery", "-A", "application.dispatcher.celery_app_chr", "worker", "--loglevel=info", "-Q", "chronicle_save,transcribe_audio,process_text", "--concurrency", "1"]
+    env_file:
+      - ../.env
+    volumes:
+      - ..:/app
+    depends_on:
+      - redis
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery_worker_sg:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: celery_worker_sg
+    network_mode: "host"
+    command: ["celery", "-A", "application.dispatcher.celery_app_sg", "worker", "--loglevel=info", "-Q", "sage_answer", "--concurrency", "4"]
     env_file:
       - ../.env
     volumes:
@@ -97,8 +121,10 @@ services:
     network_mode: "host"
     env_file:
         - ../.env
-    command: ["http", "127.0.0.1:8443"]
+    command: start --all --config /etc/ngrok.yml #["http", "127.0.0.1:8443"]
     restart: always
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
     logging:
       driver: "json-file"
       options:

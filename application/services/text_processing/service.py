@@ -50,6 +50,8 @@ async def process_text_service(data: dict):
 
     logger.info(f"[TRANSCRIPT ENDED] {session_id}")
 
+    return 0
+
 
 
     

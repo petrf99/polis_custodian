@@ -25,6 +25,7 @@ class Dispatcher:
             'transcribe_audio': 'tasks.transcribe_audio',
             'text_processing': 'tasks.segment_text_file',
             'chronicle_save': 'tasks.chronicle_save',
+            'sage_answer': 'tasks.sage_answer'
         }
 
         if service_name not in task_name_map:

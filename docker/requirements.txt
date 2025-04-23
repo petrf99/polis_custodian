@@ -11,3 +11,5 @@ hf_xet
 tiktoken
 nltk
 qdrant-client
+transformers>=4.36.0
+optimum>=1.13.2

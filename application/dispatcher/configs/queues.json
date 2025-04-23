@@ -1,5 +1,6 @@
 {
     "tasks.transcribe_audio": "transcribe_audio",
     "tasks.segment_text_file": "process_text",
-    "tasks.chronicle_save": "chronicle_save"
+    "tasks.chronicle_save": "chronicle_save",
+    "tasks.sage_answer": "sage_answer"
 }

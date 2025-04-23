@@ -49,3 +49,5 @@ async def run_transcription(data: dict):
     os.remove(file_path)
 
     logger.info(f"[TRANSCRIPT ENDED] {session_id}")
+
+    return 0

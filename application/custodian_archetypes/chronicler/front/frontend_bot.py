@@ -36,20 +36,8 @@ class ChronicleFlow(StatesGroup):
     waiting_for_topic = State()
     waiting_for_dialog_name = State()
 
-
-# Set up bot
-def get_ngrok_url():
-    try:
-        resp = requests.get("http://127.0.0.1:4040/api/tunnels")
-        tunnels = resp.json().get("tunnels", [])
-        for tunnel in tunnels:
-            if tunnel["proto"] == "https":
-                return tunnel["public_url"]
-    except Exception as e:
-        print(f"❌ Не удалось получить ngrok URL: {e}")
-        return None
-
-NGROK_URL = get_ngrok_url()
+from application.tech_utils.ngrok_set_up import get_public_url
+NGROK_URL = get_public_url(8443)
 if not NGROK_URL:
     raise RuntimeError("Ngrok is not running or not reachable")
 
@@ -75,7 +63,7 @@ async def cmd_start(message: types.Message):
         "Welcome to the Polis Chronicler Bot 🏛️\nSend audio or text to transcribe or archive it.\nPress the button below to start:",
         reply_markup=start_kb
     )
-    logger.info('[BOT IS WORKING]')
+    logger.info('[CHRONICLER BOT IS WORKING]')
 
 @dp.message(Command(commands=["reset", "stop", "restart"]))
 async def reset_session(message: types.Message, command: CommandObject, state: FSMContext):
@@ -370,11 +358,11 @@ async def catch_all(message: types.Message):
 # Set up web server
 async def on_startup(app):
     await bot.set_webhook(WEBHOOK_URL)
-    logger.info(f"✅ Вебхук установлен: {WEBHOOK_URL}")
+    logger.info(f"✅ Webhook set up: {WEBHOOK_URL}")
 
 async def on_shutdown(app):
     await bot.delete_webhook()
-    logger.error("❌ Вебхук удалён")
+    logger.error("❌ Webhook deleted")
 
 app = web.Application()
 app.on_startup.append(on_startup)

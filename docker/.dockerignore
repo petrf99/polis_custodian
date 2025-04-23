@@ -7,3 +7,8 @@ temp_data/
 *.txt
 .env
 tests/
+*.pt
+*.onnx
+.cache/
+nltk_data/
+./data

@@ -1,5 +1,6 @@
 import logging
 from application.dispatcher.dispatcher import dispatcher
+from application.dispatcher.celery_app_chr import celery_app_chr
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,6 @@ class ChroniclerTM:
         return task_id
 
     async def get_status(self, session_id: str):
-        from application.dispatcher.celery_app_chr import celery_app_chr
         try:
             task_id = self.task_session_map[session_id]
         except:
