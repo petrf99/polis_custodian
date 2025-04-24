@@ -38,7 +38,11 @@ def split_chunks_by_token_limit(texts: List[str], max_tokens: int) -> List[str]:
 
     layer = 1
     for text in texts:
-        test_chunk = current_chunk + text + separator
+        if current_chunk:
+            test_chunk = current_chunk + separator + text
+        else:
+            test_chunk = text
+
         token_count = count_tokens(test_chunk)
 
         if token_count > max_tokens:
@@ -98,7 +102,9 @@ def recursive_distill(question, chunks: List[Dict]) -> List[str]:
         joined = "\n\n".join(summaries)
         if count_tokens(joined) <= MODEL2_MAX_TOKENS:
             break
-        summaries = summarize_chunks([joined])  # ещё один слой сжатия
+
+        joined = texts = split_chunks_by_token_limit(summaries, MODEL1_MAX_TOKENS - (PREFIX_TOKENS+TOKEN_DELTA))
+        summaries = summarize_chunks(question, joined)  # ещё один слой сжатия
 
         file_path = str(Path.cwd() / f'summaries_{layer}.txt')
         layer += 1
