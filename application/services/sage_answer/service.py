@@ -17,15 +17,13 @@ async def sage_answer(data: dict):
     result = await asyncio.to_thread(sage_answer_worker, data)
     logger.info("[SAGE IS READY TO ANSWER]")
 
-    await send_message_with_buttons(f"{question_id}",
+    await send_message_with_buttons(f"{result}",
                               {'Great':"feedback_5",
                                "Well done":"feedback_4",
                                "Not bad": "feedback_3",
                                "Useless": "feedback_2",
                                "Nonsense": "feedback_1"}, 
                                'sage', chat_id)
-    await send_document(result, 'sage', data['chat_id']) 
-    os.remove(result)
 
     return 0
 

@@ -13,3 +13,5 @@ ngrok.yml
 
 summaries_*.txt
 full_chunk*.txt
+
+*/models/*
