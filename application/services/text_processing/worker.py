@@ -5,6 +5,8 @@ from pathlib import Path
 from datetime import datetime
 from logging import getLogger
 
+from application.services.text_processing.clean_text import clean_text
+
 import tiktoken
 tokenizer = tiktoken.get_encoding("cl100k_base")  # совместим с GPT-4, ChatGPT
 
@@ -43,6 +45,8 @@ def segment_text_file(file_path: str, args: dict):
     # Чтение текста
     with open(file_path, "r", encoding="utf-8") as f:
         text = f.read()
+    
+    text = clean_text(text)
 
     # Делим на фрагменты
     if strategy == "paragraph":

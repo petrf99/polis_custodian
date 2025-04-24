@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Tuple, Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from qdrant_client import QdrantClient
@@ -55,18 +55,32 @@ def get_pg_conn():
     )
 
 # === Слияние перекрывающихся окон ===
-def merge_windows(windows: List[tuple[int, int]]) -> List[tuple[int, int]]:
+def merge_windows(windows: List[Tuple[int, int]], window_size: int = 10) -> List[Tuple[int, int]]:
     if not windows:
         return []
+
+    # === Слияние перекрывающихся окон ===
     sorted_windows = sorted(windows)
     merged = [sorted_windows[0]]
+
     for start, end in sorted_windows[1:]:
         last_start, last_end = merged[-1]
         if start <= last_end:  # пересекаются
             merged[-1] = (last_start, max(last_end, end))
         else:
             merged.append((start, end))
-    return merged
+
+    # === Делим каждый слитый интервал на окна по N ===
+    split_windows = []
+    for start, end in merged:
+        current = start
+        while current <= end:
+            window_end = min(current + window_size - 1, end)
+            split_windows.append((current, window_end))
+            current += window_size
+
+    return split_windows
+
 
 # === Основная функция ===
 def build_chunks_from_vector(vector: List[float], search_width: int, depth: int = SEARCH_DEPTH) -> List[Dict[str, Any]]:
@@ -98,38 +112,37 @@ def build_chunks_from_vector(vector: List[float], search_width: int, depth: int 
     for dialog_id, raw_windows in dialog_windows.items():
         ranges = merge_windows(raw_windows)
 
-        # 3.1 Генерация SQL WHERE
-        clause = " OR ".join([f"segment_number BETWEEN {start} AND {end}" for (start, end) in ranges])
-        cursor.execute(f"""
-            SELECT speaker, content, segment_number
-            FROM utterances
-            WHERE dialog_id = %s AND ({clause})
-            ORDER BY segment_number;
-        """, (dialog_id,))
-        utterances = cursor.fetchall()
-
-        # 3.2 Данные о диалоге и топике
         cursor.execute("""
-            SELECT d.title AS dialog_title, d.started_at::date, t.name AS topic_name
-            FROM dialogs d
-            JOIN topics t ON d.topic_id = t.id
-            WHERE d.id = %s;
+                SELECT d.title AS dialog_title, d.started_at::date, t.name AS topic_name
+                FROM dialogs d
+                JOIN topics t ON d.topic_id = t.id
+                WHERE d.id = %s;
         """, (dialog_id,))
         meta = cursor.fetchone()
 
-        chunk = {
-            "topic": meta["topic_name"],
-            "dialog": meta["dialog_title"],
-            "datetime": meta["started_at"].isoformat() if meta["started_at"] else None,
-            "dialog_id": dialog_id,
-            "source_utterance_ids": utterance_ids_by_dialog[dialog_id],
-            "utterances": [
-                {"text": row["content"]}
-                for row in utterances
-            ]
-        }
+        for (start, end) in ranges:
+            clause = f"segment_number BETWEEN {start} AND {end}"
+            cursor.execute(f"""
+                SELECT speaker, content, segment_number
+                FROM utterances
+                WHERE dialog_id = %s AND ({clause})
+                ORDER BY segment_number;
+            """, (dialog_id,))
+            utterances = cursor.fetchall()
 
-        chunks.append(chunk)
+            chunk = {
+                "topic": meta["topic_name"],
+                "dialog": meta["dialog_title"],
+                "datetime": meta["started_at"].isoformat() if meta["started_at"] else None,
+                "dialog_id": dialog_id,
+                "source_utterance_ids": utterance_ids_by_dialog[dialog_id],
+                "utterances": [
+                    {"text": row["content"]}
+                    for row in utterances
+                ]
+            }
+
+            chunks.append(chunk)
 
     cursor.close()
     conn.close()

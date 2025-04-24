@@ -16,7 +16,7 @@ def sage_answer_worker(data: dict):
     question_vector = embed_question(data['question'])
     sim_vectors = search_similar_vectors(question_vector, 1, 'sage_cache')
     chunks = build_chunks_from_vector(question_vector, data['search_width'], data['search_depth'])
-    summaries = recursive_distill(chunks)
+    summaries = recursive_distill(data['question'], chunks)
     #upsert_to_sage_cache(question_vector, data, 'test_context', sim_vectors[0]['score'], True)
     context = final_context("\n\n".join(summaries), data['question'])
     return answer(context, data['question'])
