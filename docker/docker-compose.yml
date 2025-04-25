@@ -52,7 +52,7 @@ services:
       dockerfile: docker/Dockerfile
     container_name: celery_worker_chr
     network_mode: "host"
-    command: ["celery", "-A", "application.dispatcher.celery_app_chr", "worker", "--loglevel=info", "-Q", "chronicle_save,transcribe_audio,process_text", "--concurrency", "1"]
+    command: ["celery", "-A", "application.dispatcher.celery_app_chr", "worker", "--loglevel=info", "-Q", "chronicle_save,transcribe_audio,process_text", "--concurrency", "4"]
     env_file:
       - ../.env
     volumes:
@@ -73,7 +73,7 @@ services:
       dockerfile: docker/Dockerfile
     container_name: celery_worker_sg
     network_mode: "host"
-    command: ["celery", "-A", "application.dispatcher.celery_app_sg", "worker", "--loglevel=info", "-Q", "sage_answer", "--concurrency", "4"]
+    command: ["celery", "-A", "application.dispatcher.celery_app_sg", "worker", "--loglevel=info", "-Q", "sage_answer", "--concurrency", "2"]
     env_file:
       - ../.env
     volumes:

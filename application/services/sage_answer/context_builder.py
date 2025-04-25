@@ -5,12 +5,17 @@ from psycopg2.extras import RealDictCursor
 from qdrant_client import QdrantClient
 from qdrant_client.models import SearchRequest
 
+from logging import getLogger
+logger = getLogger(__name__)
+
 # === Конфиг ===
 SEARCH_DEPTH = int(os.getenv("SAGE_SEARCH_DEPTH", 5))
 SEARCH_WIDTH = int(os.getenv("SAGE_SEARCH_WIDTH", 3))
 POSTGRES_URL = os.getenv("POSTGRES_URL")
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 UTTERANCE_COLLECTION = os.getenv("SAGE_UTTERANCE_COLLECTION", "utterances")
+
+ws = int(os.getenv("CHUNCK_WINDOW_SIZE", 10))
 
 qdrant = QdrantClient(QDRANT_URL)
 
@@ -110,7 +115,7 @@ def build_chunks_from_vector(vector: List[float], search_width: int, depth: int 
 
     # 3. По каждому диалогу — собрать объединённый чанк
     for dialog_id, raw_windows in dialog_windows.items():
-        ranges = merge_windows(raw_windows)
+        ranges = merge_windows(raw_windows, ws)
 
         cursor.execute("""
                 SELECT d.title AS dialog_title, d.started_at::date, t.name AS topic_name
@@ -119,6 +124,9 @@ def build_chunks_from_vector(vector: List[float], search_width: int, depth: int 
                 WHERE d.id = %s;
         """, (dialog_id,))
         meta = cursor.fetchone()
+
+        if not meta:
+            logger.error(f"{dialog_id}")
 
         for (start, end) in ranges:
             clause = f"segment_number BETWEEN {start} AND {end}"

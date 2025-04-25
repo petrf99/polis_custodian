@@ -68,15 +68,17 @@ def split_chunks_by_token_limit(texts: List[str], max_tokens: int) -> List[str]:
 # === Генерация текстов из чанков ===
 def format_chunk(chunk: Dict) -> str:
     header = f"[Topic: {chunk['topic']}]\n[Dialog: {chunk['dialog']}]\n[Date: {chunk['datetime']}]\n"
-    body = "\n".join(f"{u['text']}" for u in chunk['utterances'])
+    body = " ".join(f"{u['text']}" for u in chunk['utterances'])
     return header + "\n" + clean_text(body)
 
 # === Summarize list of texts ===
 def summarize_chunks(question, texts: List[str]) -> List[str]:
     summaries = []
 
+    SUMMARY_TOKEN_LIMIT = int(os.getenv("SUMMARY_TOKEN_LIMIT", 512))
+
     for text in texts:
-        summary = summarize_with_llama(PROMT1_HEAD, PROMT_TAIL, question, text, max_tokens=512)
+        summary = summarize_with_llama(PROMT1_HEAD, PROMT_TAIL, question, text, max_tokens=SUMMARY_TOKEN_LIMIT)
         summaries.append(summary)
 
     return summaries
@@ -103,7 +105,7 @@ def recursive_distill(question, chunks: List[Dict]) -> List[str]:
         if count_tokens(joined) <= MODEL2_MAX_TOKENS:
             break
 
-        joined = texts = split_chunks_by_token_limit(summaries, MODEL1_MAX_TOKENS - (PREFIX_TOKENS+TOKEN_DELTA))
+        joined = split_chunks_by_token_limit(summaries, MODEL1_MAX_TOKENS - (PREFIX_TOKENS+TOKEN_DELTA))
         summaries = summarize_chunks(question, joined)  # ещё один слой сжатия
 
         file_path = str(Path.cwd() / f'summaries_{layer}.txt')

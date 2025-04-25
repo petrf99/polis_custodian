@@ -32,7 +32,7 @@ def sage_answer_worker(data: dict):
         cached = 'UNCACHED'
         chunks = build_chunks_from_vector(question_vector, data['search_width'], data['search_depth'])
         summaries = recursive_distill(data['question'], chunks)
-        context = "\n\n".join(summaries) # final_context("\n\n".join(summaries), data['question'])
+        context = "\n===\n".join(summaries) # final_context("\n\n".join(summaries), data['question'])
     answ = answer(context, data['question'])
-    # upsert_to_sage_cache(question_vector, data, context, sim_vectors[0]['score'], True)
-    return cached + '\n\n' + context + '\n\n' + answ
+    upsert_to_sage_cache(question_vector, data, context, score, True)
+    return cached + '\n--------------------\n' + context + '\n------------------\n' + answ

@@ -12,8 +12,8 @@
       "retry_kwargs": {"max_retries": 3}
     },
     "tasks.sage_answer": {
-      "soft_time_limit": 300,
-      "retry_kwargs": {"max_retries": 2}
+      "soft_time_limit": 600,
+      "retry_kwargs": {"max_retries": 1}
     }
   }
   

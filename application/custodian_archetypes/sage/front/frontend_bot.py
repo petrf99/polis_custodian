@@ -77,6 +77,27 @@ async def cmd_start(message: types.Message):
     #await bot.send_message(message.chat.id, f"`{escape_md("{'use_cache': true, 'search_width': 3, 'search_depth': 17}")}`, parse_mode="MarkdownV2")
     logger.info('[SAGE BOT IS WORKING]')
 
+
+
+@dp.message(Command(commands=["reset", "stop", "restart"]))
+async def reset_session(message: types.Message, command: CommandObject, state: FSMContext):
+    data = await state.get_data()
+    try:
+        status_info = await sg_tm.get_status(data['question_id'])
+        if status_info in ("PENDING", "STARTED"):
+            await message.reply("❌ You can't terminate thinking process.")
+            return
+        elif status_info in ("SUCCESS"):
+            await message.reply("❌ You already have your answer")
+            return
+    except Exception as e:
+        logger.exception(f"[STATUS CHECK ERROR] {e}")
+        await message.reply("❌ Error while checking status.")
+    await state.clear()
+    chat_id = message.chat.id
+    await bot.send_message(chat_id=chat_id, text="Thinking process terminated 🫡. You can ask another question.")
+
+
 # === Check status command ===
 @dp.message(Command(commands=["status"]))
 async def check_status(message: types.Message, command: CommandObject):
