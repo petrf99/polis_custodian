@@ -145,7 +145,7 @@ DEFAULT_CONFIG = {
     "use_cache": os.getenv("SAGE_USE_CACHE", "True").lower() == "true",
     "search_width": int(os.getenv("SAGE_SEARCH_WIDTH", 3)),
     "search_depth": int(os.getenv("SAGE_SEARCH_DEPTH", 5)),
-    "verbose": os.getenv("SAGE_VERBOSE_MODE", "True").lower() == "true"
+    "verbose": os.getenv("SAGE_VERBOSE_MODE", "False").lower() == "true"
 }
 
 @dp.message(F.text)
