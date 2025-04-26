@@ -36,7 +36,6 @@ def split_chunks_by_token_limit(texts: List[str], max_tokens: int) -> List[str]:
 
     separator = '\n------------------------\n'
 
-    layer = 1
     for text in texts:
         if current_chunk:
             test_chunk = current_chunk + separator + text
@@ -49,11 +48,6 @@ def split_chunks_by_token_limit(texts: List[str], max_tokens: int) -> List[str]:
             # Добавляем предыдущий chunk (без нового слова)
             if current_chunk:
                 chunks.append(current_chunk)
-
-                file_path = str(Path.cwd() / f'chunks_split_{layer}.txt')
-                layer += 1
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(current_chunk)
 
             current_chunk = text + separator
         else:
@@ -91,14 +85,6 @@ def recursive_distill(question, chunks: List[Dict]) -> List[str]:
     texts = split_chunks_by_token_limit([format_chunk(chunk) for chunk in chunks], MODEL1_MAX_TOKENS - (PREFIX_TOKENS+TOKEN_DELTA))
 
     summaries = summarize_chunks(question, texts)
-    
-    layer = 1
-    file_path = str(Path.cwd() / f'summaries_{layer}.txt')
-    layer += 1
-    with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(f"[NUMBER OF SUMMARIES] {len(summaries)}\n\n")
-        for i, summary in enumerate(summaries, start=1):
-            f.write(f"[SUMMARY {i}]\n{summary.strip()}\n\n")
 
     while True:
         joined = "\n\n".join(summaries)
@@ -107,12 +93,5 @@ def recursive_distill(question, chunks: List[Dict]) -> List[str]:
 
         joined = split_chunks_by_token_limit(summaries, MODEL1_MAX_TOKENS - (PREFIX_TOKENS+TOKEN_DELTA))
         summaries = summarize_chunks(question, joined)  # ещё один слой сжатия
-
-        file_path = str(Path.cwd() / f'summaries_{layer}.txt')
-        layer += 1
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(f"[NUMBER OF SUMMARIES] {len(summaries)}\n\n")
-            for i, summary in enumerate(summaries, start=1):
-                f.write(f"[SUMMARY {i}]\n{summary.strip()}\n\n")
 
     return summaries

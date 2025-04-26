@@ -106,12 +106,13 @@ def build_chunks_from_vector(vector: List[float], search_width: int, depth: int 
     utterance_ids_by_dialog = defaultdict(list)
 
     for hit in hits:
-        payload = hit.payload
-        dialog_id = payload["dialog_id"]
-        center = payload["segment_number"]
-        window = (center - depth, center + depth)
-        dialog_windows[dialog_id].append(window)
-        utterance_ids_by_dialog[dialog_id].append(payload["utterance_id"])
+        if hit.score >= float(os.getenv("QDRANT_SEARCH_THRESHOLD", 0.5)):
+            payload = hit.payload
+            dialog_id = payload["dialog_id"]
+            center = payload["segment_number"]
+            window = (center - depth, center + depth)
+            dialog_windows[dialog_id].append(window)
+            utterance_ids_by_dialog[dialog_id].append(payload["utterance_id"])
 
     # 3. По каждому диалогу — собрать объединённый чанк
     for dialog_id, raw_windows in dialog_windows.items():
@@ -178,8 +179,7 @@ def format_chunks_for_telegram(chunks: List[Dict[str, Any]], max_chunks: int = 3
 def format_chunks_as_prompt(chunks: List[Dict[str, Any]], max_chunks: int = 3) -> str:
     prompt_parts = []
     for i, chunk in enumerate(chunks[:max_chunks]):
-        header = f"[Chunk {i+1}]\n" \
-                 f"Topic: {chunk['topic']}\n" \
+        header = f"Topic: {chunk['topic']}\n" \
                  f"Dialog: {chunk['dialog']}\n" \
                  f"Date: {chunk['datetime']}\n\n"
 
@@ -189,5 +189,5 @@ def format_chunks_as_prompt(chunks: List[Dict[str, Any]], max_chunks: int = 3) -
 
         prompt_parts.append(header + utterances)
 
-    return "\n\n".join(prompt_parts)
+    return "\n\n\n".join(prompt_parts)
 

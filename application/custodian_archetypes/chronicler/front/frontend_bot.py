@@ -126,7 +126,7 @@ async def start_session(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(session_start_dttm=datetime.datetime.now().isoformat())
     await state.update_data(user_id=callback.from_user.id)
 
-    await callback.message.answer("📥 Please send an audio file / voice message or text (.txt or just type it)\n\n⚠️Note: max file size via Telegram - 20MB.\n\n☝🏻 If your file exceed this limit please upload it to https://tmpfiles.org and send the link to the chat.")
+    await callback.message.answer("📥 Please send an audio file / voice message or text (.txt or just type it)\n\n⚠️ Note: max file size via Telegram - 20MB.\n\n☝🏻 If your file exceed this limit please upload it to https://tmpfiles.org and send the link to the chat.")
     await state.set_state(FormStates.waiting_file)
 
     asyncio.create_task(start_timeout_watcher(state=state, target_state=FormStates.waiting_file, timeout_seconds=timeout_seconds, callback_message=callback.message, start_kb=start_kb))

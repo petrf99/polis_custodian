@@ -66,7 +66,7 @@ async def cmd_start(message: types.Message):
     await message.answer(
         "Welcome to the Polis Sage Bot 🏛️\n\nSend text message if you want to speak with the Sage 👤\n\n☝🏻 You can specify some parameters by adding smth like this to the end of your question:"
     )
-    config_str = json.dumps({'use_cache': True, 'search_width': 3, 'search_depth': 5})
+    config_str = json.dumps({'use_cache': True, 'search_width': 3, 'search_depth': 5, 'verbose': False})
     escaped = escape_md(config_str)
 
     await bot.send_message(
@@ -92,7 +92,7 @@ async def reset_session(message: types.Message, command: CommandObject, state: F
             return
     except Exception as e:
         logger.exception(f"[STATUS CHECK ERROR] {e}")
-        await message.reply("❌ Error while checking status.")
+        await message.reply("Error while checking status...")
     await state.clear()
     chat_id = message.chat.id
     await bot.send_message(chat_id=chat_id, text="Thinking process terminated 🫡. You can ask another question.")
@@ -145,6 +145,7 @@ DEFAULT_CONFIG = {
     "use_cache": os.getenv("SAGE_USE_CACHE", "True").lower() == "true",
     "search_width": int(os.getenv("SAGE_SEARCH_WIDTH", 3)),
     "search_depth": int(os.getenv("SAGE_SEARCH_DEPTH", 5)),
+    "verbose": os.getenv("SAGE_VERBOSE_MODE", "True").lower() == "true"
 }
 
 @dp.message(F.text)
@@ -176,7 +177,8 @@ async def handle_message(message: Message, state: FSMContext):
         'question_id': question_id,
         'use_cache': config['use_cache'],
         'search_width': config['search_width'],
-        'search_depth': config['search_depth']
+        'search_depth': config['search_depth'],
+        'verbose': config['verbose']
     }
 
     # Сохраняем в FSM
@@ -204,7 +206,7 @@ async def sage_feedback(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
 
     await callback.message.answer("Thank you. Now you can ask the Sage another question 🌤\n\n☝🏻 You can specify some parameters by adding smth like this to the end of your question:")
-    config_str = json.dumps({'use_cache': True, 'search_width': 3, 'search_depth': 5})
+    config_str = json.dumps({'use_cache': True, 'search_width': 3, 'search_depth': 5, 'verbose': False})
     escaped = escape_md(config_str)
 
     await bot.send_message(
